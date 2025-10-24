@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Covu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --primary-orange: #ff6b35;
+            --primary-green: #2d5a3d;
+        }
+
+        .primary-orange {
+            color: var(--primary-orange);
+        }
+
+        .bg-primary-orange {
+            background-color: var(--primary-orange);
+        }
+
+        .border-primary-orange {
+            border-color: var(--primary-orange);
+        }
+
+        .primary-green {
+            color: var(--primary-green);
+        }
+
+        .bg-primary-green {
+            background-color: var(--primary-green);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* Enhanced button interactions */
+        button {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Smooth transitions for all interactive elements */
+        button, input, textarea, select {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Password strength indicator */
+        .password-strength {
+            transition: all 0.3s ease;
+        }
+
+        .password-strength.weak {
+            background-color: #ef4444;
+        }
+
+        .password-strength.medium {
+            background-color: #f59e0b;
+        }
+
+        .password-strength.strong {
+            background-color: #10b981;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-orange-50/20 to-blue-50/20 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 active:text-gray-900 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-95">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    <span class="text-sm font-medium">Back</span>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-800">Create Account</h1>
+                <div class="w-16"></div> <!-- Spacer for centering -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Registration Form -->
+        <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-primary-orange/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="user-plus" class="h-10 w-10 text-primary-orange"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Join Covu</h2>
+                <p class="text-gray-600">Create your account to start selling and shopping</p>
+            </div>
+
+            <!-- Form -->
+            <form id="registrationForm" class="space-y-6">
+                <!-- Full Name -->
+                <div>
+                    <label for="fullName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="text"
+                            id="fullName"
+                            name="fullName"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg"
+                            placeholder="Enter your full name"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg"
+                            placeholder="your@email.com"
+                            required
+                        >
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">This will be your primary login identifier</p>
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="phone" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg"
+                            placeholder="0801 234 5678"
+                            required
+                        >
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Nigerian number (e.g., 0801 234 5678 or 234 801 234 5678)</p>
+                </div>
+
+                <!-- State -->
+                <div>
+                    <label for="state" class="block text-sm font-semibold text-gray-700 mb-2">
+                        State <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="map-pin" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <select
+                            id="state"
+                            name="state"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg appearance-none"
+                            required
+                        >
+                            <option value="">Select your state</option>
+                            <option value="Abia">Abia</option>
+                            <option value="Adamawa">Adamawa</option>
+                            <option value="Akwa Ibom">Akwa Ibom</option>
+                            <option value="Anambra">Anambra</option>
+                            <option value="Bauchi">Bauchi</option>
+                            <option value="Bayelsa">Bayelsa</option>
+                            <option value="Benue">Benue</option>
+                            <option value="Borno">Borno</option>
+                            <option value="Cross River">Cross River</option>
+                            <option value="Delta">Delta</option>
+                            <option value="Ebonyi">Ebonyi</option>
+                            <option value="Edo">Edo</option>
+                            <option value="Ekiti">Ekiti</option>
+                            <option value="Enugu">Enugu</option>
+                            <option value="FCT">Federal Capital Territory</option>
+                            <option value="Gombe">Gombe</option>
+                            <option value="Imo">Imo</option>
+                            <option value="Jigawa">Jigawa</option>
+                            <option value="Kaduna">Kaduna</option>
+                            <option value="Kano">Kano</option>
+                            <option value="Katsina">Katsina</option>
+                            <option value="Kebbi">Kebbi</option>
+                            <option value="Kogi">Kogi</option>
+                            <option value="Kwara">Kwara</option>
+                            <option value="Lagos">Lagos</option>
+                            <option value="Nasarawa">Nasarawa</option>
+                            <option value="Niger">Niger</option>
+                            <option value="Ogun">Ogun</option>
+                            <option value="Ondo">Ondo</option>
+                            <option value="Osun">Osun</option>
+                            <option value="Oyo">Oyo</option>
+                            <option value="Plateau">Plateau</option>
+                            <option value="Rivers">Rivers</option>
+                            <option value="Sokoto">Sokoto</option>
+                            <option value="Taraba">Taraba</option>
+                            <option value="Yobe">Yobe</option>
+                            <option value="Zamfara">Zamfara</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Important for location-based store listings</p>
+                </div>
+
+                <!-- Area (LGA) -->
+                <div>
+                    <label for="lga" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Area (LGA) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="map" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <select
+                            id="lga"
+                            name="lga"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            required
+                            disabled
+                        >
+                            <option value="">Select your state first</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Local Government Area for precise location matching</p>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg"
+                            placeholder="Create a strong password"
+                            required
+                        >
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                            <i data-lucide="eye" class="h-5 w-5 text-gray-400 hover:text-gray-600"></i>
+                        </button>
+                    </div>
+                    <!-- Password Strength Indicator -->
+                    <div class="mt-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="passwordStrengthBar" class="h-full w-0 password-strength transition-all duration-300"></div>
+                            </div>
+                            <span id="passwordStrengthText" class="text-xs text-gray-500">Weak</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            Password must be at least 8 characters with uppercase, lowercase, and number
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg"
+                            placeholder="Confirm your password"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                        class="mt-1 w-4 h-4 text-primary-orange bg-gray-100 border-gray-300 rounded focus:ring-primary-orange focus:ring-2"
+                        required
+                    >
+                    <label for="terms" class="text-sm text-gray-600">
+                        I agree to the <a href="#" class="text-primary-orange hover:underline">Terms of Service</a> and <a href="#" class="text-primary-orange hover:underline">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    id="submitBtn"
+                    class="w-full py-4 bg-orange-500 text-white rounded-xl hover:bg-orange-600 active:bg-orange-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                    <div class="flex items-center justify-center gap-3">
+                        <i data-lucide="user-plus" class="h-5 w-5"></i>
+                        <span>Create Account</span>
+                    </div>
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="text-center mt-6">
+                <p class="text-gray-600">
+                    Already have an account?
+                    <a href="login.html" class="text-primary-orange hover:underline font-medium">Sign in here</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Welcome Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform transition-all">
+            <!-- Success Icon -->
+            <div class="mb-6 flex justify-center">
+                <div class="bg-green-100 rounded-full p-4">
+                    <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Welcome Message -->
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to Covu! 🎉</h2>
+            <p class="text-lg text-gray-600 mb-2">
+                Nigeria's Greatest & Safest Suburban Marketplace
+            </p>
+            <p class="text-base text-gray-500 mb-6">
+                For entrepreneurs and everyone in Nigeria
+            </p>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div id="progressBar" class="bg-primary-orange h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
+            </div>
+
+            <p class="text-sm text-gray-400">
+                Redirecting to marketplace in <span id="countdown" class="font-bold text-primary-orange">5</span> seconds...
+            </p>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Backend API Integration -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/registration.js"></script>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\DELL\Desktop\frontend\templates\register.html

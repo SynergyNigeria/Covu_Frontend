@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase - Covu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        :root {
+            --primary-orange: #ff6b35;
+            --primary-green: #2d5a3d;
+        }
+
+        .primary-orange {
+            color: var(--primary-orange);
+        }
+
+        .bg-primary-orange {
+            background-color: var(--primary-orange);
+        }
+
+        .border-primary-orange {
+            border-color: var(--primary-orange);
+        }
+
+        .primary-green {
+            color: var(--primary-green);
+        }
+
+        .bg-primary-green {
+            background-color: var(--primary-green);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    <span class="text-sm font-medium">Back</span>
+                </button>
+                <img src="/assets/images/logo/covu-logo.png" alt="Logo" class="h-8">
+                <div class="w-16"></div> <!-- Spacer for centering -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6 pb-24">
+        <!-- Product Brief Info -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Product Details</h2>
+            <div class="flex items-center gap-4">
+                <img id="productImage" src="" alt="Product" class="w-20 h-20 object-cover rounded-lg">
+                <div class="flex-1">
+                    <h3 id="productName" class="font-semibold text-gray-800">Product Name</h3>
+                    <p id="productStore" class="text-sm text-gray-500">Store Name</p>
+                    <p id="productPrice" class="text-primary-orange font-bold text-lg">₦0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Balance -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-green/10 rounded-full flex items-center justify-center">
+                        <i data-lucide="wallet" class="h-5 w-5 text-primary-green"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Wallet Balance</p>
+                        <p id="walletBalance" class="text-2xl font-bold text-primary-green">₦0</p>
+                    </div>
+                </div>
+                <button id="topUpBtn" class="text-primary-orange text-sm font-medium hover:underline">
+                    Top Up
+                </button>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Payment Summary</h2>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span id="subtotalAmount" class="font-medium">₦0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600">Delivery Fee</span>
+                        <div class="group relative">
+                            <i data-lucide="info" class="h-4 w-4 text-gray-400 cursor-help"></i>
+                            <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 bg-gray-800 text-white text-xs rounded-lg p-2 z-10">
+                                Delivery fee varies based on your location relative to the seller's store
+                            </div>
+                        </div>
+                    </div>
+                    <span id="deliveryFeeAmount" class="font-medium">₦0</span>
+                </div>
+                <div class="border-t border-gray-200 pt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-gray-800">Total</span>
+                        <span id="totalAmount" class="font-bold text-xl text-primary-orange">₦0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Address Input -->
+            <div class="mt-6">
+                <label for="deliveryAddress" class="block text-sm font-medium text-gray-700 mb-2">
+                    Delivery Address *
+                </label>
+                <textarea
+                    id="deliveryAddress"
+                    rows="3"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-orange focus:ring-0 text-gray-700"
+                    placeholder="Enter your complete delivery address"
+                    required
+                ></textarea>
+                <p class="text-xs text-gray-500 mt-1">Please provide a detailed address including street, area, and landmarks</p>
+            </div>
+
+            <!-- Payment Amount Input -->
+            <div class="mt-6">
+                <label for="paymentAmount" class="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Amount
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
+                    <input
+                        type="number"
+                        id="paymentAmount"
+                        class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-orange focus:ring-0 text-gray-700"
+                        placeholder="Enter amount"
+                        readonly
+                    >
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Amount will be held in escrow until order completion</p>
+            </div>
+
+            <!-- Proceed to Payment Button -->
+            <button id="proceedToPaymentBtn" class="w-full bg-primary-orange text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2 mt-6">
+                <i data-lucide="credit-card" class="h-5 w-5"></i>
+                Proceed to Payment
+            </button>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-primary-green text-white px-4 py-3 rounded-lg shadow-lg z-50 hidden max-w-sm">
+        <div class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="h-5 w-5"></i>
+            <span id="toastMessage" class="text-sm font-medium"></span>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+        <div class="bg-primary-green text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 max-w-sm">
+            <i data-lucide="check-circle" class="h-5 w-5 flex-shrink-0"></i>
+            <p id="toastMessage" class="text-sm font-medium"></p>
+        </div>
+    </div>
+
+    <!-- Top Up Modal -->
+    <div id="topUpModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800">Top Up Wallet</h2>
+                    <button id="closeTopUpModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label for="topUpAmount" class="block text-sm font-medium text-gray-700 mb-2">
+                            Enter Amount (₦)
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
+                            <input
+                                type="number"
+                                id="topUpAmount"
+                                class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-orange focus:ring-0 text-gray-700"
+                                placeholder="5000"
+                                min="100"
+                                step="100"
+                            >
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Minimum amount: ₦100</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button id="cancelTopUp" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button id="confirmTopUp" class="flex-1 bg-primary-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
+                            Top Up
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Processing Modal -->
+    <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800">Processing Purchase</h2>
+                    <button id="purchaseModalClose" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="purchaseLoadingState" class="p-6 text-center">
+                    <div class="w-16 h-16 bg-primary-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="loader" class="h-8 w-8 text-primary-orange animate-spin"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Processing Your Purchase</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        We will debit your wallet while we inform the seller about this order.
+                        You can cancel this order from your orders tab anytime until the seller confirms the order.
+                        Once the seller confirms, you will not be able to cancel the order.
+                    </p>
+                    <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
+                        <i data-lucide="clock" class="h-4 w-4"></i>
+                        <span>Processing payment...</span>
+                    </div>
+                    <!-- Cancel Button (only in loading state) -->
+                    <button id="cancelPurchaseBtn" class="w-full mt-4 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel Purchase
+                    </button>
+                </div>
+
+                <!-- Success State -->
+                <div id="purchaseSuccessState" class="p-6 text-center hidden">
+                    <!-- Success Message -->
+                    <div id="successMessage" class="mb-6">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i id="successTick" data-lucide="check-circle" class="h-8 w-8 text-green-600"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Payment Successful!</h3>
+                        <p class="text-gray-600 text-sm mb-2">
+                            Order <span id="orderId" class="font-semibold text-primary-orange">COVU-21947723-98</span> has been placed successfully.
+                        </p>
+                        <p class="text-gray-600 text-sm">
+                            Amount debited: <span id="orderAmount" class="font-semibold">₦0</span>
+                        </p>
+                    </div>
+
+                    <!-- Order Management Message -->
+                    <div id="orderManagementMessage" class="hidden">
+                        <div class="w-16 h-16 bg-primary-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="clipboard-list" class="h-8 w-8 text-primary-green"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Order Placed Successfully!</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Check your orders tab to manage this order.
+                        </p>
+                        <button id="viewOrderBtn" class="w-full bg-primary-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
+                            Go to Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div class="flex justify-around items-center py-2 px-4">
+            <a href="shop-list.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="store" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Store</span>
+            </a>
+            <a href="products.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="package" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Products</span>
+            </a>
+            <a href="orders.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="clipboard-list" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Orders</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="user" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Add padding to body to account for fixed nav -->
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+    </style>
+
+    <!-- Backend API Integration -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        // Check authentication before loading page
+        if (!api.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="/assets/js/purchase.js"></script>
+</body>
+</html>

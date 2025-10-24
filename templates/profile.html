@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Covu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --primary-orange: #ff6b35;
+            --primary-green: #2d5a3d;
+        }
+
+        .primary-orange {
+            color: var(--primary-orange);
+        }
+
+        .bg-primary-orange {
+            background-color: var(--primary-orange);
+        }
+
+        .border-primary-orange {
+            border-color: var(--primary-orange);
+        }
+
+        .primary-green {
+            color: var(--primary-green);
+        }
+
+        .bg-primary-green {
+            background-color: var(--primary-green);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            padding-bottom: 80px;
+        }
+
+        /* Enhanced button interactions */
+        button {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Smooth transitions */
+        button, input, select {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Section spacing */
+        .section-card {
+            margin-bottom: 2rem;
+        }
+
+        /* Input focus states */
+        input:focus, select:focus {
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-orange-50/30 to-orange-100/20 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="flex items-center gap-2 text-gray-600 hover:text-primary-orange transition-all duration-200 p-2 rounded-lg hover:bg-orange-50">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    <span class="text-sm font-medium">Back</span>
+                </button>
+                <h1 class="text-xl font-bold text-primary-orange">Profile</h1>
+                <div class="w-16"></div> <!-- Spacer for centering -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8 pb-24">
+        <!-- Profile Header -->
+        <div class="relative bg-primary-orange rounded-3xl shadow-2xl p-10 mb-10 overflow-hidden">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
+            </div>
+
+            <div class="relative">
+                <!-- Profile Avatar -->
+                <div class="flex flex-col items-center mb-6">
+                    <div class="relative mb-4">
+                        <div class="w-32 h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-4 ring-white/30 shadow-2xl">
+                            <i data-lucide="user" class="h-16 w-16 text-white"></i>
+                        </div>
+                        <!-- Online Status Indicator -->
+                        <div class="absolute bottom-2 right-2 w-8 h-8 bg-green-400 rounded-full border-4 border-white shadow-lg"></div>
+                    </div>
+
+                    <!-- Profile Info -->
+                    <div class="text-center text-white">
+                        <h2 class="text-3xl font-bold mb-3" id="userName">John Doe</h2>
+                        <div class="space-y-2 mb-6">
+                            <p class="text-white/90 flex items-center justify-center gap-2 text-base" id="userEmail">
+                                <i data-lucide="mail" class="h-4 w-4"></i>
+                                john.doe@example.com
+                            </p>
+                            <p class="text-white/90 flex items-center justify-center gap-2 text-base" id="userPhone">
+                                <i data-lucide="phone" class="h-4 w-4"></i>
+                                +234 123 456 7890
+                            </p>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        <div class="grid grid-cols-3 gap-6 max-w-lg mx-auto">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit">
+                                <div id="walletBalance" class="text-sm font-bold mb-1">₦0</div>
+                                <div class="text-sm text-white/80">Wallet</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit">
+                                <div id="orderCount" class="text-sm font-bold mb-1">0</div>
+                                <div class="text-sm text-white/80">Orders</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit">
+                                <div id="storeRating" class="text-sm font-bold mb-1">0.0</div>
+                                <div class="text-sm text-white/80">Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Management Section -->
+        <div class="section-card bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-primary-orange/10 rounded-xl flex items-center justify-center">
+                    <i data-lucide="store" class="h-6 w-6 text-primary-orange"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Shop Management</h3>
+            </div>
+            
+            <div class="bg-orange-50 rounded-2xl p-6 border border-orange-200/50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i data-lucide="store" class="h-8 w-8 text-primary-orange"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800 text-lg mb-1">My Shop</p>
+                            <p class="text-sm text-gray-600" id="shopStatus">No active shop</p>
+                        </div>
+                    </div>
+                    <button id="shopActionBtn" class="px-8 py-3 bg-primary-orange text-white rounded-xl hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium transform hover:-translate-y-0.5 active:scale-95">
+                        Activate Shop
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Settings -->
+        <div class="section-card bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="lock" class="h-6 w-6 text-primary-green"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Security</h3>
+            </div>
+            
+            <form id="passwordForm" class="space-y-5">
+                <div>
+                    <label for="currentPassword" class="block text-sm font-semibold text-gray-700 mb-3">Current Password</label>
+                    <input type="password" id="currentPassword" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter current password" required>
+                </div>
+                <div>
+                    <label for="newPassword" class="block text-sm font-semibold text-gray-700 mb-3">New Password</label>
+                    <input type="password" id="newPassword" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter new password" required>
+                </div>
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-3">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Confirm new password" required>
+                </div>
+                <button type="submit" class="w-full px-6 py-4 bg-primary-green text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-base transform hover:-translate-y-0.5 active:scale-95">
+                    Update Password
+                </button>
+            </form>
+        </div>
+
+        <!-- Location Settings -->
+        <div class="section-card bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="map-pin" class="h-6 w-6 text-blue-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Location</h3>
+            </div>
+            
+            <form id="locationForm" class="space-y-5">
+                <div>
+                    <label for="address" class="block text-sm font-semibold text-gray-700 mb-3">Address</label>
+                    <input type="text" id="address" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter your complete address">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="city" class="block text-sm font-semibold text-gray-700 mb-3">City/LGA</label>
+                        <input type="text" id="city" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="City or LGA">
+                    </div>
+                    <div>
+                        <label for="state" class="block text-sm font-semibold text-gray-700 mb-3">State</label>
+                        <input type="text" id="state" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="State">
+                    </div>
+                </div>
+                <button type="submit" class="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-base transform hover:-translate-y-0.5 active:scale-95">
+                    Update Location
+                </button>
+            </form>
+        </div>
+
+        <!-- Contact Settings -->
+        <div class="section-card bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="phone" class="h-6 w-6 text-purple-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Contact Information</h3>
+            </div>
+            
+            <form id="contactForm" class="space-y-5">
+                <div>
+                    <label for="contactEmail" class="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
+                    <input type="email" id="contactEmail" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="your.email@example.com">
+                </div>
+                <div>
+                    <label for="contactPhone" class="block text-sm font-semibold text-gray-700 mb-3">Phone Number</label>
+                    <input type="tel" id="contactPhone" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="+234 123 456 7890">
+                </div>
+                <button type="submit" class="w-full px-6 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-base transform hover:-translate-y-0.5 active:scale-95">
+                    Update Contact Info
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Actions -->
+        <div class="section-card bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="settings" class="h-6 w-6 text-gray-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Account Actions</h3>
+            </div>
+            
+            <div class="space-y-4">
+                <button id="logoutBtn" class="w-full flex items-center justify-between px-6 py-5 border-2 border-red-200 text-red-600 rounded-2xl hover:bg-red-50 hover:border-red-300 transition-all duration-200 bg-red-50/50 group active:scale-95">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-all duration-200">
+                            <i data-lucide="log-out" class="h-6 w-6 text-red-600"></i>
+                        </div>
+                        <div class="text-left">
+                            <span class="font-semibold text-base block">Log Out</span>
+                            <span class="text-sm text-red-500">Sign out of your account</span>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="h-6 w-6 group-hover:translate-x-1 transition-transform duration-200"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-white text-gray-800 px-6 py-4 rounded-2xl shadow-2xl border border-gray-200 z-50 hidden max-w-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <i data-lucide="check-circle" class="h-5 w-5 text-green-600"></i>
+            </div>
+            <span id="toastMessage" class="text-sm font-medium"></span>
+        </div>
+    </div>
+
+    <!-- Become Seller Success Modal -->
+    <div id="sellerSuccessModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-t-3xl p-8 text-white text-center">
+                <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="check-circle" class="h-10 w-10 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">🎉 Congratulations!</h3>
+                <p class="text-white/90 text-lg">Welcome to the COVU Seller Community</p>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">You're Now a COVU Seller!</h4>
+                    <p class="text-gray-600 leading-relaxed">
+                        Your store has been created and is ready for business! We're excited to help you grow and connect with thousands of potential customers.
+                    </p>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mt-0.5">
+                            <i data-lucide="check" class="h-3 w-3 text-green-600"></i>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-800">✅ Store Created</span>
+                            <p class="text-sm text-gray-600">Your COVU store is live and ready for customers</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 bg-primary-orange/10 rounded-full flex items-center justify-center mt-0.5">
+                            <i data-lucide="package" class="h-3 w-3 text-primary-orange"></i>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-800">Add Your Products</span>
+                            <p class="text-sm text-gray-600">Start listing products to attract customers</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 bg-primary-orange/10 rounded-full flex items-center justify-center mt-0.5">
+                            <i data-lucide="users" class="h-3 w-3 text-primary-orange"></i>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-800">Start Selling</span>
+                            <p class="text-sm text-gray-600">We'll help your products reach the right buyers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+                    <p class="text-sm text-green-800 text-center">
+                        <i data-lucide="shield-check" class="h-4 w-4 inline mr-1"></i>
+                        <strong>Your store is live!</strong> Start adding products and watch your business grow.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3 p-6 pt-0">
+                <button id="exploreMarketplaceBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                    Explore Marketplace
+                </button>
+                <button id="viewMyStoreBtn" class="flex-1 px-4 py-3 bg-primary-green text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-lg">
+                    View My Store
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Become Seller Confirmation Modal -->
+    <div id="becomeSellerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-primary-orange rounded-t-3xl p-6 text-white text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="store" class="h-8 w-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">🎉 Ready to Start Selling?</h3>
+                <p class="text-white/90 text-sm">Join thousands of sellers on COVU</p>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                        </div>
+                        <span class="text-gray-700">Create your own store</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                        </div>
+                        <span class="text-gray-700">List unlimited products</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                        </div>
+                        <span class="text-gray-700">Receive payments securely</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                        </div>
+                        <span class="text-gray-700">Get instant order notifications</span>
+                    </div>
+                </div>
+
+                <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+                    <p class="text-sm text-orange-800">
+                        <i data-lucide="info" class="h-4 w-4 inline mr-1"></i>
+                        <strong>Free to join!</strong> No setup fees or monthly charges. We only earn when you earn.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3 p-6 pt-0">
+                <button id="cancelBecomeSellerBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                    Maybe Later
+                </button>
+                <button id="confirmBecomeSellerBtn" class="flex-1 px-4 py-3 bg-primary-orange text-white rounded-xl hover:from-orange-500 hover:to-orange-600 transition-all duration-200 font-medium shadow-lg">
+                    Yes, Become a Seller!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl z-40">
+        <div class="flex justify-around items-center py-3 px-4 max-w-4xl mx-auto">
+            <a href="shop-list.html" class="flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="store" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Store</span>
+            </a>
+            <a href="products.html" class="flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="package" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Products</span>
+            </a>
+            <a href="orders.html" class="flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="clipboard-list" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Orders</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 bg-primary-orange shadow-lg cursor-default">
+                <i data-lucide="user" class="h-6 w-6 text-white mb-1"></i>
+                <span class="text-xs font-medium text-white">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Remove old inline style -->
+    <script>
+        // Remove the old inline padding style if it exists
+        const oldStyle = document.querySelector('style:last-of-type');
+        if (oldStyle && oldStyle.textContent.includes('padding-bottom: 80px')) {
+            oldStyle.remove();
+        }
+    </script>
+
+    <!-- Backend API Integration -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        // Check authentication before loading page
+        if (!api.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="/assets/js/profile.js"></script>
+</body>
+</html>

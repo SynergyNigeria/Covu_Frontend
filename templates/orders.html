@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Covu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --primary-orange: #ff6b35;
+            --primary-green: #2d5a3d;
+        }
+
+        .primary-orange {
+            color: var(--primary-orange);
+        }
+
+        .bg-primary-orange {
+            background-color: var(--primary-orange);
+        }
+
+        .border-primary-orange {
+            border-color: var(--primary-orange);
+        }
+
+        .primary-green {
+            color: var(--primary-green);
+        }
+
+        .bg-primary-green {
+            background-color: var(--primary-green);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-confirmed {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        .status-delivered {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    <span class="text-sm font-medium">Back</span>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-800">My Orders</h1>
+                <div class="w-16"></div> <!-- Spacer for centering -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6 pb-24">
+        <!-- Orders List -->
+        <div id="ordersContainer" class="space-y-4">
+            <!-- Orders will be populated by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="clipboard-list" class="h-12 w-12 text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+            <p class="text-gray-500 mb-6">Your order history will appear here</p>
+            <a href="products.html" class="inline-flex items-center gap-2 bg-primary-orange text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors">
+                <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+                Start Shopping
+            </a>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+            <!-- Modal Header -->
+            <div id="modalHeader" class="p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div id="modalIcon" class="w-12 h-12 rounded-full flex items-center justify-center">
+                        <!-- Icon will be inserted here -->
+                    </div>
+                    <h3 id="modalTitle" class="text-xl font-bold text-gray-900"></h3>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p id="modalMessage" class="text-gray-600 text-base leading-relaxed"></p>
+                <div id="modalDetails" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                    <!-- Additional details will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-gray-200 flex gap-3">
+                <button
+                    id="modalCancelBtn"
+                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                    onclick="closeConfirmationModal()"
+                >
+                    Cancel
+                </button>
+                <button
+                    id="modalConfirmBtn"
+                    class="flex-1 px-6 py-3 text-white font-medium rounded-lg transition-colors"
+                >
+                    <!-- Button text will be set dynamically -->
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div class="flex justify-around items-center py-2 px-4">
+            <a href="shop-list.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="store" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Store</span>
+            </a>
+            <a href="products.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="package" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Products</span>
+            </a>
+            <a href="orders.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 bg-primary-orange cursor-default">
+                <i data-lucide="clipboard-list" class="h-6 w-6 text-white mb-1"></i>
+                <span class="text-xs font-medium text-white">Orders</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="user" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Add padding to body to account for fixed nav -->
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+    </style>
+
+    <!-- Backend API Integration -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        // Check authentication before loading page
+        if (!api.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="/assets/js/orders.js"></script>
+</body>
+</html>

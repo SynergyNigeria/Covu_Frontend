@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Store Profiles</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --primary-orange: #ef3700;
+            --primary-green: #009639;
+            --bg-white: #ffffff;
+        }
+        .text-primary-orange { color: var(--primary-orange); }
+        .bg-primary-orange { background-color: var(--primary-orange); }
+        .text-primary-green { color: var(--primary-green); }
+        .bg-primary-green { background-color: var(--primary-green); }
+        .bg-bg-white { background-color: var(--bg-white); }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        /* Sticky search styles */
+        .search-sticky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 12px 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-sticky .relative {
+            max-width: 100%;
+            width: 100%;
+        }
+        
+        /* Desktop sticky search */
+        @media (min-width: 768px) {
+            .search-sticky {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                width: auto;
+                max-width: 500px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                border-radius: 0 0 16px 16px;
+                padding: 16px 24px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            
+            .search-sticky .relative {
+                max-width: 500px;
+                width: 500px;
+            }
+        }
+        
+        /* Expand search on focus */
+        #searchContainer:focus-within .relative {
+            max-width: 500px;
+            width: 500px;
+        }
+        
+        @media (min-width: 768px) {
+            #searchContainer:focus-within .relative {
+                max-width: 600px;
+                width: 600px;
+            }
+        }
+        
+        #searchInput:focus {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        /* Line clamp utility */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex justify-center mb-6">
+                <img src="/assets/images/logo/covu-logo.png" alt="Covu Logo" class="h-12 w-auto">
+            </div>
+            <!-- Search Bar -->
+            <div id="searchContainer" class="flex justify-center mb-6 transition-all duration-300">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Search stores..." class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl shadow-lg hover:border-primary-orange focus:outline-none focus:border-primary-orange focus:ring-0 focus:shadow-xl transition-all duration-300 placeholder-gray-400 text-gray-700">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-orange/10 to-primary-green/10 pointer-events-none"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <section class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">Filter by Category</h2>
+                <button id="filterToggle" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200">
+                    <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                    <span class="text-sm font-medium">Show Filters</span>
+                </button>
+            </div>
+            <div id="categoryFiltersContainer" class="hidden">
+                <div class="flex flex-wrap gap-2" id="categoryFilters">
+                    <!-- Categories will be populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Store Grid -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="storeGrid">
+                <!-- Store cards will be populated by JS -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Store Detail Modal -->
+    <div id="storeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800" id="modalStoreTitle">Store Details</h2>
+                    <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <!-- Store Info -->
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <img id="modalStoreImage" src="" alt="Store" class="w-full md:w-64 h-48 object-cover rounded-lg">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-2" id="modalStoreName">Store Name</h3>
+                                <p class="text-gray-600 mb-4" id="modalStoreDescription">Store description</p>
+                                <div class="flex items-center mb-2">
+                                    <div class="flex text-yellow-400 mr-2" id="modalStoreStars"></div>
+                                    <span class="text-sm text-gray-600" id="modalStoreRating">4.5</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i data-lucide="map-pin" class="h-4 w-4 mr-1"></i>
+                                    <span id="modalStoreLocation">Location</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Section -->
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Rate this store</h4>
+                            <div class="flex items-center gap-1" id="ratingStars">
+                                <button class="rating-star text-gray-300 hover:text-yellow-400 transition-colors" data-rating="1">
+                                    <i data-lucide="star" class="h-5 w-5"></i>
+                                </button>
+                                <button class="rating-star text-gray-300 hover:text-yellow-400 transition-colors" data-rating="2">
+                                    <i data-lucide="star" class="h-5 w-5"></i>
+                                </button>
+                                <button class="rating-star text-gray-300 hover:text-yellow-400 transition-colors" data-rating="3">
+                                    <i data-lucide="star" class="h-5 w-5"></i>
+                                </button>
+                                <button class="rating-star text-gray-300 hover:text-yellow-400 transition-colors" data-rating="4">
+                                    <i data-lucide="star" class="h-5 w-5"></i>
+                                </button>
+                                <button class="rating-star text-gray-300 hover:text-yellow-400 transition-colors" data-rating="5">
+                                    <i data-lucide="star" class="h-5 w-5"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1" id="ratingMessage">Click to rate this store</p>
+                        </div>
+                    </div>
+
+                    <!-- Products Section -->
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Products</h3>
+                        <div id="modalProductsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <!-- Products will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div class="flex justify-around items-center py-2 px-4">
+            <a href="#" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 bg-primary-orange cursor-default">
+                <i data-lucide="store" class="h-6 w-6 text-white mb-1"></i>
+                <span class="text-xs font-medium text-white">Store</span>
+            </a>
+            <a href="products.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="package" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Products</span>
+            </a>
+            <a href="orders.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="clipboard-list" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Orders</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 active:scale-95">
+                <i data-lucide="user" class="h-6 w-6 text-gray-600 mb-1"></i>
+                <span class="text-xs font-medium text-gray-600">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Add padding to body to account for fixed nav -->
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+    </style>
+
+    <!-- Backend API Integration -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        // Check authentication before loading page
+        if (!api.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="/assets/js/script.js"></script>
+</body>
+</html>
