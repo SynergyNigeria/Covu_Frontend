@@ -1,52 +1,124 @@
-// Seller Gallery JavaScript
+// Seller Gallery JavaScript - API Integration
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // Load products and initialize
-    loadSellerProducts();
-    setupEventListeners();
+    // Global variables
+    let currentProducts = [];
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMore = true;
+    let api = null;
 
-    function loadSellerProducts() {
-        // Load products from localStorage
-        const savedProducts = JSON.parse(localStorage.getItem('products') || '[]');
+    // Wait for API to be available
+    waitForAPI().then(() => {
+        // Load products and initialize
+        loadSellerProducts();
+        setupEventListeners();
+    }).catch(error => {
+        console.error('Failed to initialize API:', error);
+        showToast('Failed to connect to server. Please refresh the page.', 'error');
+    });
 
-        // For design purposes, always show sample products with cloud CDN images
-        const sampleProducts = createSampleProducts();
-
-        // Combine saved products with sample products
-        const allProducts = [...savedProducts, ...sampleProducts];
-
-        // Update statistics
-        updateStatistics(allProducts);
-
-        // Display products in gallery
-        displayProducts(allProducts);
+    async function waitForAPI() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const checkAPI = () => {
+                if (typeof APIHandler !== 'undefined') {
+                    api = new APIHandler();
+                    resolve();
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(checkAPI, 100);
+                } else {
+                    reject(new Error('API handler not available'));
+                }
+            };
+            
+            checkAPI();
+        });
     }
 
-    function updateStatistics(products) {
-        const totalProducts = products.length;
-        const activeProducts = products.filter(p => p.status === 'active').length;
-        const totalViews = Math.floor(Math.random() * 10000) + 1000; // Mock views for now
+    async function loadSellerProducts(page = 1, append = false) {
+        if (isLoading) return;
+        
+        isLoading = true;
+        
+        try {
+            showLoadingState(!append);
+            
+            // Fetch seller's products from API
+            const response = await api.request('/products/my_products/', {
+                params: { page, page_size: API_CONFIG.PAGE_SIZE }
+            });
 
+            const products = response.results || [];
+            
+            if (append) {
+                currentProducts = [...currentProducts, ...products];
+            } else {
+                currentProducts = products;
+            }
+
+            // Update pagination info
+            hasMore = response.next !== null;
+            currentPage = page;
+
+            // Update statistics
+            updateStatistics(response);
+
+            // Display products in gallery
+            displayProducts(currentProducts, append);
+            
+            // Show/hide load more button
+            toggleLoadMoreButton();
+        } catch (error) {
+            console.error('Error loading products:', error);
+            showToast('Failed to load products. Please try again.', 'error');
+            
+            // Show empty state if first load failed
+            if (!append) {
+                showEmptyState();
+            }
+        } finally {
+            isLoading = false;
+            hideLoadingState();
+        }
+    }
+
+    function updateStatistics(data) {
+        const totalProducts = data.count || currentProducts.length;
+        const activeProducts = currentProducts.filter(p => p.is_active).length;
+        
         document.getElementById('totalProducts').textContent = totalProducts;
         document.getElementById('activeProducts').textContent = activeProducts;
+        
+        // Mock total views - this could be added to your backend model
+        const totalViews = Math.floor(Math.random() * totalProducts * 100) + (totalProducts * 10);
         document.getElementById('totalViews').textContent = totalViews.toLocaleString();
     }
 
-    function displayProducts(products) {
+    function displayProducts(products, append = false) {
         const gallery = document.getElementById('productsGallery');
         const emptyState = document.getElementById('emptyState');
 
-        // Always hide empty state since we show sample products
+        if (products.length === 0 && !append) {
+            showEmptyState();
+            return;
+        }
+
+        // Hide empty state if we have products
         emptyState.classList.add('hidden');
 
-        gallery.innerHTML = products.map((product, index) => `
+        const productHTML = products.map((product, index) => `
             <div class="relative group cursor-pointer overflow-hidden rounded-lg" onclick="openProductModal('${product.id}')">
                 <div class="aspect-square bg-gray-100 relative overflow-hidden">
-                    <img src="${product.image || getCloudImage(index)}"
+                    <img src="${getProductImageUrl(product)}"
                          alt="${product.name}"
-                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                         onerror="this.src='${getCloudImage(index)}'">
 
                     <!-- Overlay on hover -->
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
@@ -60,21 +132,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     <!-- Status indicator -->
                     <div class="absolute top-2 right-2">
                         <span class="px-2 py-1 text-xs font-medium rounded-full ${
-                            product.status === 'active' ? 'bg-green-500 text-white' :
-                            product.status === 'draft' ? 'bg-gray-500 text-white' :
-                            'bg-red-500 text-white'
+                            product.is_active ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
                         }">
-                            ${product.status || 'draft'}
+                            ${product.is_active ? 'Active' : 'Inactive'}
                         </span>
                     </div>
 
                     <!-- Price overlay -->
                     <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                        <div class="text-white font-semibold text-sm">₦${product.price?.toLocaleString()}</div>
+                        <div class="text-white font-semibold text-sm">₦${parseFloat(product.price).toLocaleString()}</div>
                     </div>
                 </div>
             </div>
         `).join('');
+
+        if (append) {
+            gallery.innerHTML += productHTML;
+        } else {
+            gallery.innerHTML = productHTML;
+        }
 
         // Re-initialize icons
         setTimeout(() => {
@@ -82,96 +158,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
-    function createSampleProducts() {
-        const sampleProducts = [
-            {
-                id: 'sample-1',
-                name: 'Elegant Handbag',
-                price: 25000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-2',
-                name: 'Designer Watch',
-                price: 45000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-3',
-                name: 'Premium Sneakers',
-                price: 35000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-4',
-                name: 'Wireless Headphones',
-                price: 28000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-5',
-                name: 'Smartphone Case',
-                price: 5000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1601593346740-925612772716?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-6',
-                name: 'Leather Wallet',
-                price: 12000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-7',
-                name: 'Sunglasses',
-                price: 18000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-8',
-                name: 'Perfume Bottle',
-                price: 22000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-9',
-                name: 'Coffee Mug',
-                price: 3500,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-10',
-                name: 'Notebook Set',
-                price: 8000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-11',
-                name: 'Desk Lamp',
-                price: 15000,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=center'
-            },
-            {
-                id: 'sample-12',
-                name: 'Water Bottle',
-                price: 6500,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop&crop=center'
-            }
-        ];
-
-        return sampleProducts;
+    function getProductImageUrl(product) {
+        if (product.images) {
+            // Handle Cloudinary URL from backend
+            return product.images.url || product.images;
+        }
+        return getCloudImage(0);
     }
+
+    function showEmptyState() {
+        const emptyState = document.getElementById('emptyState');
+        const gallery = document.getElementById('productsGallery');
+        
+        gallery.innerHTML = '';
+        emptyState.classList.remove('hidden');
+    }
+
+    function showLoadingState(clearGallery = false) {
+        if (clearGallery) {
+            const gallery = document.getElementById('productsGallery');
+            gallery.innerHTML = `
+                <div class="col-span-full flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange mx-auto mb-4"></div>
+                        <p class="text-gray-600">Loading your products...</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function hideLoadingState() {
+        // Loading state will be replaced by actual content
+    }
+
+    function toggleLoadMoreButton() {
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        if (hasMore && currentProducts.length > 0) {
+            loadMoreContainer.classList.remove('hidden');
+        } else {
+            loadMoreContainer.classList.add('hidden');
+        }
+    }
+
+
 
     function getCloudImage(index) {
         // Fallback cloud images if no product image
@@ -197,6 +227,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (addFirstProductBtn) {
             addFirstProductBtn.addEventListener('click', handleAddProduct);
+        }
+
+        // Load more button
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', handleLoadMore);
         }
 
         // Product modal
@@ -270,39 +306,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function openProductModal(productId) {
-        // First check saved products in localStorage
-        const savedProducts = JSON.parse(localStorage.getItem('products') || '[]');
-        let product = savedProducts.find(p => p.id === productId);
-
-        // If not found in saved products, check sample products
-        if (!product) {
-            const sampleProducts = createSampleProducts();
-            product = sampleProducts.find(p => p.id === productId);
-        }
-
+        // Find product in current products array
+        const product = currentProducts.find(p => p.id === productId);
         if (!product) return;
 
         // Populate modal with product data
         document.getElementById('modalProductName').textContent = product.name;
         document.getElementById('modalProductNameDisplay').textContent = product.name;
-        document.getElementById('modalProductPrice').textContent = `₦${product.price?.toLocaleString()}`;
+        document.getElementById('modalProductPrice').textContent = `₦${parseFloat(product.price).toLocaleString()}`;
         document.getElementById('modalProductDescription').textContent = product.description || 'Beautiful product showcasing quality craftsmanship and attention to detail.';
 
         // Set product image
         const imageElement = document.getElementById('modalProductImage');
-        imageElement.src = product.image || getCloudImage(0);
+        imageElement.src = getProductImageUrl(product);
         imageElement.alt = product.name;
 
         // Set status badge
         const statusElement = document.getElementById('modalProductStatus');
-        statusElement.textContent = product.status || 'active';
+        const isActive = product.is_active;
+        statusElement.textContent = isActive ? 'Active' : 'Inactive';
         statusElement.className = `px-3 py-1 rounded-full text-sm font-medium ${
-            product.status === 'active' ? 'bg-green-100 text-green-700' :
-            product.status === 'draft' ? 'bg-gray-100 text-gray-600' :
-            'bg-red-100 text-red-700'
+            isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
         }`;
 
-        // Mock stats for demo
+        // Mock stats for demo (these could be added to your backend model)
         document.getElementById('modalViews').textContent = Math.floor(Math.random() * 500) + 50;
         document.getElementById('modalLikes').textContent = Math.floor(Math.random() * 100) + 10;
         document.getElementById('modalShares').textContent = Math.floor(Math.random() * 20) + 1;
@@ -390,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
-    function handleAddProductSubmit(e) {
+    async function handleAddProductSubmit(e) {
         e.preventDefault();
 
         const name = document.getElementById('productName').value.trim();
@@ -425,30 +452,61 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Create product object
-        const newProduct = {
-            id: 'product-' + Date.now(),
-            name: name,
-            description: description,
-            price: price,
-            category: category,
-            status: 'active',
-            image: null, // Will be set after file processing
-            createdAt: new Date().toISOString(),
-            views: 0,
-            likes: 0,
-            shares: 0
-        };
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Adding Product...</span>
+                </div>
+            `;
 
-        // Process image file
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            newProduct.image = e.target.result;
+            // Check if user has a store first
+            const currentUser = api.getCurrentUser();
+            if (!currentUser || !currentUser.is_seller) {
+                showToast('You need to become a seller first to add products.', 'error');
+                return;
+            }
 
-            // Save to localStorage
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            products.push(newProduct);
-            localStorage.setItem('products', JSON.stringify(products));
+            // Prepare form data for API
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('price', price);
+            // Note: store will be auto-assigned by backend based on authenticated user
+            
+            // Map frontend categories to backend categories
+            const categoryMapping = {
+                'Men Clothes': 'mens_clothes',
+                'Ladies Clothes': 'ladies_clothes',
+                'Kids Clothes': 'kids_clothes',
+                'Beauty': 'beauty',
+                'Body Accessories': 'body_accessories',
+                'Clothing Extras': 'clothing_extras',
+                'Bags': 'bags',
+                'Wigs': 'wigs',
+                'Body Scents': 'body_scents'
+            };
+            
+            formData.append('category', categoryMapping[category] || category.toLowerCase().replace(' ', '_'));
+            formData.append('images', photoFile);
+            
+            // Optional feature flags - you can add UI for these later
+            formData.append('premium_quality', 'false');
+            formData.append('durable', 'false');
+            formData.append('modern_design', 'false');
+            formData.append('easy_maintain', 'false');
+
+            // Create product via API
+            const response = await api.request('/products/', {
+                method: 'POST',
+                data: formData,
+                isFormData: true
+            });
 
             // Close modal and show success
             closeAddProductModalFunc();
@@ -456,13 +514,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Reload gallery to show new product
             loadSellerProducts();
-        };
-
-        reader.onerror = function() {
-            showToast('Error processing image. Please try again.', 'error');
-        };
-
-        reader.readAsDataURL(photoFile);
+        } catch (error) {
+            console.error('Error creating product:', error);
+            
+            // Handle specific error messages
+            let errorMessage = 'Failed to add product. Please try again.';
+            
+            if (error.errors) {
+                if (error.errors.non_field_errors) {
+                    errorMessage = Array.isArray(error.errors.non_field_errors) ? error.errors.non_field_errors[0] : error.errors.non_field_errors;
+                } else if (error.errors.category) {
+                    errorMessage = 'Category validation error: ' + (Array.isArray(error.errors.category) ? error.errors.category[0] : error.errors.category);
+                } else if (error.errors.images) {
+                    errorMessage = 'Image validation error: ' + (Array.isArray(error.errors.images) ? error.errors.images[0] : error.errors.images);
+                } else if (error.errors.name) {
+                    errorMessage = 'Name validation error: ' + (Array.isArray(error.errors.name) ? error.errors.name[0] : error.errors.name);
+                } else if (error.errors.price) {
+                    errorMessage = 'Price validation error: ' + (Array.isArray(error.errors.price) ? error.errors.price[0] : error.errors.price);
+                } else if (error.errors.detail) {
+                    errorMessage = error.errors.detail;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            showToast(errorMessage, 'error');
+        } finally {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
     }
 
     function handleEditProduct() {
@@ -471,22 +552,53 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('productModal').classList.add('hidden');
     }
 
-    function handleDeleteProduct() {
+    async function handleDeleteProduct() {
         const productId = document.getElementById('productModal').dataset.productId;
 
-        if (confirm('Are you sure you want to delete this product?')) {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const updatedProducts = products.filter(p => p.id !== productId);
+        if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+            return;
+        }
 
-            localStorage.setItem('products', JSON.stringify(updatedProducts));
+        try {
+            // Show loading state
+            const deleteBtn = document.getElementById('deleteProductBtn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    <span>Deleting...</span>
+                </div>
+            `;
+
+            // Delete product via API
+            const response = await api.request(`/products/${productId}/`, {
+                method: 'DELETE'
+            });
+
+            // Close modal
+            document.getElementById('productModal').classList.add('hidden');
+            
+            // Show success message
+            showToast('Product deleted successfully', 'success');
 
             // Reload gallery
             loadSellerProducts();
-
-            document.getElementById('productModal').classList.add('hidden');
-
-            showToast('Product deleted successfully');
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            showToast(error.message || 'Failed to delete product. Please try again.', 'error');
+            
+            // Reset button state
+            const deleteBtn = document.getElementById('deleteProductBtn');
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
         }
+    }
+
+    async function handleLoadMore() {
+        if (isLoading || !hasMore) return;
+        
+        await loadSellerProducts(currentPage + 1, true);
     }
 
     function formatCurrency(amount) {

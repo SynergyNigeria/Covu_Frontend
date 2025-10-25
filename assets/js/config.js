@@ -18,10 +18,12 @@ const API_CONFIG = {
         STORES: '/stores/',
         STORE_DETAIL: (id) => `/stores/${id}/`,
         STORE_PRODUCTS: (id) => `/stores/${id}/products/`,
+        MY_STORES: '/stores/my_stores/',
         
         // Products
         PRODUCTS: '/products/',
         PRODUCT_DETAIL: (id) => `/products/${id}/`,
+        MY_PRODUCTS: '/products/my_products/',
         
         // Orders
         ORDERS: '/orders/',

@@ -1,7 +1,45 @@
-// Shop Management JavaScript
-document.addEventListener('DOMContentLoaded', function() {
+// Shop Management JavaScript - Backend Integration
+
+// Global variables
+let currentUser = null;
+let currentStore = null;
+let storeStats = {
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    storeRating: 0.0
+};
+
+// Initialize API handler
+// let api = null;
+
+// Wait for API to be available and fully initialized
+function waitForAPI() {
+    return new Promise((resolve) => {
+        const checkAPI = () => {
+            if (typeof APIHandler !== 'undefined' && APIHandler) {
+                // Initialize the API handler if not already done
+                if (!api) {
+                    api = new APIHandler();
+                }
+                resolve();
+            } else {
+                setTimeout(checkAPI, 100);
+            }
+        };
+        checkAPI();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
     // Initialize Lucide icons
     lucide.createIcons();
+
+    // Wait for API to be available
+    await waitForAPI();
+    
+    // Check authentication and load store data
+    await initializeShop();
 
     // Quick Actions Menu Toggle
     const quickActionsBtn = document.getElementById('quickActionsBtn');
@@ -43,8 +81,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (quickViewProducts) {
         quickViewProducts.addEventListener('click', function() {
-            // Navigate to seller gallery page
-            window.location.href = 'seller-gallery.html';
+            // Navigate to seller gallery page with store ID
+            if (currentStore && currentStore.id) {
+                window.location.href = `seller-gallery.html?store_id=${currentStore.id}`;
+            } else {
+                window.location.href = 'seller-gallery.html';
+            }
             closeQuickActionsMenu();
         });
     }
@@ -294,118 +336,382 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
-    // Load store data and update UI
-    loadStoreData();
+    // Initialize Shop Data and UI
+    async function initializeShop() {
+        try {
+            showLoadingState();
+            
+            // Double-check API is available
+            if (!api || typeof api.isAuthenticated !== 'function') {
+                console.error('API not properly initialized');
+                showErrorState('System initialization error. Please refresh the page.');
+                return;
+            }
+            
+            // Check if user is authenticated
+            if (!api.isAuthenticated()) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-    function loadStoreData() {
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
-        const products = JSON.parse(localStorage.getItem('products') || '[]');
+            // Load user profile
+            await loadUserProfile();
+            
+            // Check if user is a seller
+            if (!currentUser || !currentUser.is_seller) {
+                showErrorState('You must be a seller to access this page.');
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 3000);
+                return;
+            }
 
-        // Update hero stats
-        const totalProducts = products.length;
-        const activeProducts = products.filter(p => p.status === 'active').length;
-
-        const totalProductsEl = document.getElementById('totalProducts');
-        const activeProductsEl = document.getElementById('activeProducts');
-
-        if (totalProductsEl) totalProductsEl.textContent = totalProducts;
-        if (activeProductsEl) activeProductsEl.textContent = activeProducts;
-
-        // Update store info
-        const storeNameEl = document.getElementById('storeName');
-        const storeDescriptionEl = document.getElementById('storeDescription');
-
-        if (storeNameEl && storeData.name) {
-            storeNameEl.textContent = storeData.name;
-        }
-        if (storeDescriptionEl && storeData.description) {
-            storeDescriptionEl.textContent = storeData.description;
+            // Load user's store
+            await loadUserStore();
+            
+            // Load additional statistics
+            await loadStoreStatistics();
+            
+            // Update UI with loaded data
+            updateStoreUI();
+            
+        } catch (error) {
+            console.error('Error initializing shop:', error);
+            showToast('Failed to load store data. Please refresh the page.', 'error');
+        } finally {
+            hideLoadingState();
         }
     }
 
+    async function loadUserProfile() {
+        try {
+            const response = await apiRequest('GET', API_CONFIG.ENDPOINTS.PROFILE);
+            console.log('Profile response:', response);
+            
+            if (response && (response.id || response.email)) {
+                currentUser = response;
+            } else if (response.success && response.data) {
+                currentUser = response.data;
+            } else if (response.user) {
+                currentUser = response.user;
+            } else {
+                throw new Error('Invalid profile response');
+            }
+            
+            console.log('Current user:', currentUser);
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            throw error;
+        }
+    }
+
+    async function loadUserStore() {
+        try {
+            // First try to get user's stores
+            const response = await apiRequest('GET', API_CONFIG.ENDPOINTS.STORES + 'my_stores/');
+            console.log('My stores response:', response);
+            
+            let stores = [];
+            if (response.success && response.data && response.data.results) {
+                stores = response.data.results;
+            } else if (response.results) {
+                stores = response.results;
+            } else if (Array.isArray(response)) {
+                stores = response;
+            }
+            
+            if (stores.length > 0) {
+                // Get detailed store info
+                currentStore = await loadStoreDetails(stores[0].id);
+            } else {
+                throw new Error('No store found for user');
+            }
+            
+            console.log('Current store:', currentStore);
+        } catch (error) {
+            console.error('Error loading user store:', error);
+            
+            // Fallback: try to get store from general stores list
+            try {
+                const allStoresResponse = await apiRequest('GET', API_CONFIG.ENDPOINTS.STORES);
+                const allStores = allStoresResponse.results || allStoresResponse.data?.results || [];
+                const userStore = allStores.find(store => 
+                    store.seller_id === currentUser.id || 
+                    store.seller === currentUser.id ||
+                    store.seller_name === currentUser.full_name
+                );
+                
+                if (userStore) {
+                    currentStore = await loadStoreDetails(userStore.id);
+                } else {
+                    throw new Error('Store not found');
+                }
+            } catch (fallbackError) {
+                console.error('Error in fallback store loading:', fallbackError);
+                throw new Error('Unable to load your store. Please contact support.');
+            }
+        }
+    }
+
+    async function loadStoreDetails(storeId) {
+        try {
+            const storeDetail = await apiRequest('GET', API_CONFIG.ENDPOINTS.STORE_DETAIL(storeId));
+            return storeDetail;
+        } catch (error) {
+            console.error('Error loading store details:', error);
+            throw error;
+        }
+    }
+
+    async function loadStoreStatistics() {
+        try {
+            // Reset stats
+            storeStats = {
+                totalProducts: 0,
+                totalOrders: 0,
+                totalRevenue: 0,
+                storeRating: 0.0
+            };
+
+            // Load products count from store data
+            if (currentStore && currentStore.products) {
+                storeStats.totalProducts = currentStore.products.length;
+            } else {
+                storeStats.totalProducts = currentStore?.product_count || 0;
+            }
+
+            // Load orders (for stats)
+            try {
+                const ordersResponse = await apiRequest('GET', API_CONFIG.ENDPOINTS.ORDERS);
+                const orders = ordersResponse.results || ordersResponse.data?.results || [];
+                
+                // Filter orders for this store
+                const storeOrders = orders.filter(order => {
+                    return order.store_id === currentStore.id || order.store === currentStore.id;
+                });
+                
+                storeStats.totalOrders = storeOrders.length;
+                
+                // Calculate revenue from completed orders
+                const completedOrders = storeOrders.filter(order => order.status === 'delivered' || order.status === 'confirmed');
+                storeStats.totalRevenue = completedOrders.reduce((total, order) => {
+                    return total + parseFloat(order.total_amount || 0);
+                }, 0);
+                
+            } catch (error) {
+                console.warn('Could not load order statistics:', error);
+            }
+
+            // Get store rating
+            storeStats.storeRating = parseFloat(currentStore?.average_rating || 0);
+
+            console.log('Store statistics:', storeStats);
+        } catch (error) {
+            console.error('Error loading store statistics:', error);
+        }
+    }
+
+    function updateStoreUI() {
+        if (!currentStore) return;
+
+        // Update hero section
+        const storeNameEl = document.getElementById('storeName');
+        const storeDescriptionEl = document.getElementById('storeDescription');
+        
+        if (storeNameEl) {
+            storeNameEl.textContent = currentStore.name || 'My Store';
+        }
+        if (storeDescriptionEl) {
+            storeDescriptionEl.textContent = currentStore.description || 'Welcome to my store!';
+        }
+
+        // Update stats
+        const totalProductsEl = document.getElementById('totalProducts');
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const storeRatingEl = document.getElementById('storeRating');
+
+        if (totalProductsEl) {
+            totalProductsEl.textContent = storeStats.totalProducts.toString();
+        }
+        if (totalOrdersEl) {
+            totalOrdersEl.textContent = storeStats.totalOrders.toString();
+        }
+        if (totalRevenueEl) {
+            totalRevenueEl.textContent = formatCurrency(storeStats.totalRevenue);
+        }
+        if (storeRatingEl) {
+            storeRatingEl.textContent = storeStats.storeRating.toFixed(1);
+        }
+
+        console.log('UI updated with store data');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    // API Request Helper (using existing API handler)
+    async function apiRequest(method, endpoint, data = null) {
+        try {
+            if (method === 'GET') {
+                return await api.get(endpoint);
+            } else if (method === 'POST') {
+                return await api.post(endpoint, data);
+            } else if (method === 'PUT') {
+                return await api.put(endpoint, data);
+            } else if (method === 'PATCH') {
+                return await api.patch(endpoint, data);
+            } else if (method === 'DELETE') {
+                return await api.delete(endpoint);
+            }
+        } catch (error) {
+            console.error(`API ${method} request failed:`, error);
+            throw error;
+        }
+    }
+
+    // Loading States
+    function showLoadingState() {
+        // Show loading indicators
+        const elements = ['storeName', 'storeDescription', 'totalProducts', 'totalOrders', 'totalRevenue', 'storeRating'];
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = 'Loading...';
+                el.classList.add('animate-pulse');
+            }
+        });
+    }
+
+    function hideLoadingState() {
+        // Remove loading indicators
+        const elements = ['storeName', 'storeDescription', 'totalProducts', 'totalOrders', 'totalRevenue', 'storeRating'];
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('animate-pulse');
+            }
+        });
+    }
+
+    function showErrorState(message) {
+        const storeNameEl = document.getElementById('storeName');
+        const storeDescriptionEl = document.getElementById('storeDescription');
+        
+        if (storeNameEl) {
+            storeNameEl.textContent = 'Error';
+        }
+        if (storeDescriptionEl) {
+            storeDescriptionEl.textContent = message;
+        }
+        
+        showToast(message, 'error');
+    }
+
     function loadDeliveryData() {
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
+        if (!currentStore) return;
 
         const deliveryRateSameEl = document.getElementById('deliveryRateSameModal');
         const deliveryRateOutsideEl = document.getElementById('deliveryRateOutsideModal');
 
         if (deliveryRateSameEl) {
-            deliveryRateSameEl.value = storeData.deliveryRateSame || '';
+            deliveryRateSameEl.value = currentStore.delivery_within_lga || '';
         }
         if (deliveryRateOutsideEl) {
-            deliveryRateOutsideEl.value = storeData.deliveryRateOutside || '';
+            deliveryRateOutsideEl.value = currentStore.delivery_outside_lga || '';
         }
     }
 
     function loadContactData() {
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
+        if (!currentUser) return;
 
         const whatsappEl = document.getElementById('whatsappNumberModal');
         const emailEl = document.getElementById('emailModal');
         const addressEl = document.getElementById('addressModal');
 
-        if (whatsappEl) whatsappEl.value = storeData.whatsapp || '';
-        if (emailEl) emailEl.value = storeData.email || '';
-        if (addressEl) addressEl.value = storeData.address || '';
+        if (whatsappEl) whatsappEl.value = currentUser.phone_number || '';
+        if (emailEl) emailEl.value = currentUser.email || '';
+        if (addressEl) {
+            const address = `${currentUser.city || ''}, ${currentUser.state || ''}`.trim().replace(/^,\s*|,\s*$/, '');
+            addressEl.value = address || '';
+        }
     }
 
     function loadStoreDetailsData() {
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
+        if (!currentStore) return;
 
         const nameEl = document.getElementById('storeNameModal');
         const descriptionEl = document.getElementById('storeDescriptionModal');
         const categoryEl = document.getElementById('storeCategoryModal');
 
-        if (nameEl) nameEl.value = storeData.name || '';
-        if (descriptionEl) descriptionEl.value = storeData.description || '';
-        if (categoryEl) categoryEl.value = storeData.category || '';
+        if (nameEl) nameEl.value = currentStore.name || '';
+        if (descriptionEl) descriptionEl.value = currentStore.description || '';
+        if (categoryEl) categoryEl.value = currentStore.category || '';
     }
 
-    function handleDeliverySubmit(e) {
+    async function handleDeliverySubmit(e) {
         e.preventDefault();
 
-        const deliveryRateSame = document.getElementById('deliveryRateSameModal').value;
-        const deliveryRateOutside = document.getElementById('deliveryRateOutsideModal').value;
+        const deliveryRateSame = parseFloat(document.getElementById('deliveryRateSameModal').value);
+        const deliveryRateOutside = parseFloat(document.getElementById('deliveryRateOutsideModal').value);
 
-        // Update store data
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
-        storeData.deliveryRateSame = deliveryRateSame;
-        storeData.deliveryRateOutside = deliveryRateOutside;
-        localStorage.setItem('storeData', JSON.stringify(storeData));
-
-        showToast('Delivery settings saved successfully!', 'success');
-        closeAllModals();
-    }
-
-    function handleContactSubmit(e) {
-        e.preventDefault();
-
-        const whatsapp = document.getElementById('whatsappNumberModal').value;
-        const email = document.getElementById('emailModal').value;
-        const address = document.getElementById('addressModal').value;
-
-        // Update store data
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
-        storeData.whatsapp = whatsapp;
-        storeData.email = email;
-        storeData.address = address;
-        localStorage.setItem('storeData', JSON.stringify(storeData));
-
-        // Update display
-        const storeDescriptionEl = document.getElementById('storeDescription');
-        if (storeDescriptionEl && storeData.description) {
-            storeDescriptionEl.textContent = storeData.description;
+        if (isNaN(deliveryRateSame) || isNaN(deliveryRateOutside)) {
+            showToast('Please enter valid delivery rates', 'error');
+            return;
         }
 
-        showToast('Contact information saved successfully!', 'success');
+        if (deliveryRateSame < 0 || deliveryRateOutside < 0) {
+            showToast('Delivery rates must be positive numbers', 'error');
+            return;
+        }
+
+        try {
+            // Show loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving...';
+            submitBtn.disabled = true;
+
+            // Update store via API
+            const updateData = {
+                delivery_within_lga: deliveryRateSame,
+                delivery_outside_lga: deliveryRateOutside
+            };
+
+            const updatedStore = await apiRequest('PATCH', API_CONFIG.ENDPOINTS.STORE_DETAIL(currentStore.id), updateData);
+            
+            // Update local store data
+            currentStore.delivery_within_lga = updatedStore.delivery_within_lga;
+            currentStore.delivery_outside_lga = updatedStore.delivery_outside_lga;
+
+            showToast('Delivery settings saved successfully!', 'success');
+            closeAllModals();
+
+        } catch (error) {
+            console.error('Error updating delivery settings:', error);
+            showToast('Failed to save delivery settings. Please try again.', 'error');
+        }
+    }
+
+    async function handleContactSubmit(e) {
+        e.preventDefault();
+        
+        // Note: Contact info is tied to user profile, not store
+        // This would require updating the user profile endpoint
+        showToast('Contact information updates will be available in profile settings', 'info');
         closeAllModals();
     }
 
-    function handleStoreSubmit(e) {
+    async function handleStoreSubmit(e) {
         e.preventDefault();
 
-        const name = document.getElementById('storeNameModal').value;
-        const description = document.getElementById('storeDescriptionModal').value;
+        const name = document.getElementById('storeNameModal').value.trim();
+        const description = document.getElementById('storeDescriptionModal').value.trim();
         const category = document.getElementById('storeCategoryModal').value;
 
         if (!name || !description) {
@@ -413,22 +719,49 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Update store data
-        const storeData = JSON.parse(localStorage.getItem('storeData') || '{}');
-        storeData.name = name;
-        storeData.description = description;
-        storeData.category = category;
-        localStorage.setItem('storeData', JSON.stringify(storeData));
+        if (name.length < 3) {
+            showToast('Store name must be at least 3 characters long', 'error');
+            return;
+        }
 
-        // Update display
-        const storeNameEl = document.getElementById('storeName');
-        const storeDescriptionEl = document.getElementById('storeDescription');
+        if (description.length < 10) {
+            showToast('Store description must be at least 10 characters long', 'error');
+            return;
+        }
 
-        if (storeNameEl) storeNameEl.textContent = name;
-        if (storeDescriptionEl) storeDescriptionEl.textContent = description;
+        try {
+            // Show loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving...';
+            submitBtn.disabled = true;
 
-        showToast('Store details saved successfully!', 'success');
-        closeAllModals();
+            // Update store via API
+            const updateData = {
+                name: name,
+                description: description
+            };
+
+            const updatedStore = await apiRequest('PATCH', API_CONFIG.ENDPOINTS.STORE_DETAIL(currentStore.id), updateData);
+            
+            // Update local store data
+            currentStore.name = updatedStore.name;
+            currentStore.description = updatedStore.description;
+
+            // Update UI immediately
+            const storeNameEl = document.getElementById('storeName');
+            const storeDescriptionEl = document.getElementById('storeDescription');
+
+            if (storeNameEl) storeNameEl.textContent = name;
+            if (storeDescriptionEl) storeDescriptionEl.textContent = description;
+
+            showToast('Store details saved successfully!', 'success');
+            closeAllModals();
+
+        } catch (error) {
+            console.error('Error updating store details:', error);
+            showToast('Failed to save store details. Please try again.', 'error');
+        }
     }
 
     function handleWithdrawalSubmit(e) {
