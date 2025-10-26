@@ -480,26 +480,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 storeStats.totalProducts = currentStore?.product_count || 0;
             }
 
-            // Load orders (for stats)
+            // Fetch backend stats for orders and revenue
             try {
-                const ordersResponse = await apiRequest('GET', API_CONFIG.ENDPOINTS.ORDERS);
-                const orders = ordersResponse.results || ordersResponse.data?.results || [];
-                
-                // Filter orders for this store
-                const storeOrders = orders.filter(order => {
-                    return order.store_id === currentStore.id || order.store === currentStore.id;
-                });
-                
-                storeStats.totalOrders = storeOrders.length;
-                
-                // Calculate revenue from completed orders
-                const completedOrders = storeOrders.filter(order => order.status === 'delivered' || order.status === 'confirmed');
-                storeStats.totalRevenue = completedOrders.reduce((total, order) => {
-                    return total + parseFloat(order.total_amount || 0);
-                }, 0);
-                
+                // The endpoint may be /orders/stats/ or similar; adjust as needed
+                const statsResponse = await apiRequest('GET', '/orders/stats/');
+                // Use seller stats for this store's owner
+                storeStats.totalOrders = statsResponse && typeof statsResponse.active_orders === 'number' ? statsResponse.active_orders : 0;
+                storeStats.totalRevenue = statsResponse && typeof statsResponse.revenue === 'number' ? statsResponse.revenue : 0;
             } catch (error) {
-                console.warn('Could not load order statistics:', error);
+                console.warn('Could not load backend stats:', error);
             }
 
             // Get store rating
