@@ -197,9 +197,9 @@ class APIHandler {
 }
 
 // Create global API instance
-const api = new APIHandler();
+window.api = new APIHandler();
 
-// Export for use in other files
+// Export for use in other files (Node/CommonJS)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { APIHandler, api };
+    module.exports = { APIHandler, api: window.api };
 }

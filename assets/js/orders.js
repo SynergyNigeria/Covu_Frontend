@@ -290,6 +290,15 @@ function highlightOrdersTab(tab) {
         if (salesTab) salesTab.classList.add('bg-primary-orange', 'text-white');
     }
 
+// Ensure user is authenticated before loading orders page
+if (window.api && typeof window.api.isAuthenticated === 'function') {
+    if (!window.api.isAuthenticated()) {
+        window.location.href = 'login.html';
+    }
+} else {
+    // If api is not loaded for some reason, fallback to redirect
+    window.location.href = 'login.html';
+}
 // ...existing code...
 async function loadOrders(view = 'buyer') {
     const container = document.getElementById('ordersContainer');
@@ -583,6 +592,12 @@ async function performOrderAction(orderId, action, actionType) {
         } else if (actionType === 'confirm') {
             response = await api.post(API_CONFIG.ENDPOINTS.ORDER_CONFIRM(orderId), {});
             showMessage('Order confirmed successfully. Payment released to seller.', 'success');
+            // Set pending rating flag for global popup
+            if (window.setPendingRatingOrder) {
+                window.setPendingRatingOrder(orderId);
+            } else {
+                localStorage.setItem('pendingRatingOrderId', orderId);
+            }
         } else if (actionType === 'accept') {
             response = await api.post(API_CONFIG.ENDPOINTS.ORDER_ACCEPT(orderId), {});
             showMessage('Order accepted. Please prepare for delivery.', 'success');

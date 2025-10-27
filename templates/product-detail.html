@@ -163,8 +163,8 @@
     </style>
 
     <!-- Backend API Integration -->
-    <script src="/assets/js/config.js"></script>
-    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/config.js" defer></script>
+    <script src="/assets/js/api.js" defer></script>
     <script>
         // Check authentication before loading page
         if (!api.isAuthenticated()) {
@@ -172,5 +172,6 @@
         }
     </script>
     <script src="/assets/js/product-detail.js"></script>
+    <script src="/assets/js/global-rating.js" defer></script>
 </body>
 </html>
