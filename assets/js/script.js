@@ -186,12 +186,15 @@ function getActiveCategory() {
 
 // Transform backend store data to frontend format
 function transformStoreData(backendStore) {
+    // Debug: log the raw backend store object
+    console.debug('[transformStoreData] backendStore:', backendStore);
     return {
         id: backendStore.id,
         image: backendStore.logo || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
         title: backendStore.name,
         description: backendStore.description || 'Quality products available',
         rating: parseFloat(backendStore.average_rating) || 0,
+        total_ratings: backendStore.total_ratings !== undefined ? backendStore.total_ratings : (backendStore.stats ? backendStore.stats.total_ratings : 0),
         location: `${backendStore.city}, ${backendStore.state}`,
         categories: [], // Categories will be inferred from products later
         products: [], // Products loaded when modal opens
@@ -332,6 +335,38 @@ function displayStores(storeList) {
     storeList.forEach(store => {
         const card = createStoreCard(store);
         storeGrid.appendChild(card);
+
+        // Find the rating container in the card
+        const ratingContainer = card.querySelector('.store-rating-container');
+        if (ratingContainer) {
+            // Show loading state for ratings
+            ratingContainer.innerHTML = '<span class="text-xs text-gray-400">Loading rating...</span>';
+        }
+
+        // Fetch live rating stats for this store
+        api.get(`/ratings/store/${store.id}/stats/`).then(stats => {
+            // Debug log
+            console.debug('[LiveRating] Store:', store.title, stats);
+            if (ratingContainer) {
+                if (stats.total_ratings && parseFloat(stats.average_rating) > 0) {
+                    const stars = createStars(parseFloat(stats.average_rating));
+                    ratingContainer.innerHTML = `
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">${stars}</div>
+                            <span class="ml-2 text-sm text-gray-600">${parseFloat(stats.average_rating).toFixed(1)}${stats.total_ratings ? ` (${stats.total_ratings} review${stats.total_ratings > 1 ? 's' : ''})` : ''}</span>
+                        </div>
+                    `;
+                } else {
+                    ratingContainer.innerHTML = '<div class="flex items-center mb-2"><span class="text-sm text-gray-400">No ratings yet</span></div>';
+                }
+                lucide.createIcons();
+            }
+        }).catch(err => {
+            if (ratingContainer) {
+                ratingContainer.innerHTML = '<span class="text-xs text-red-400">Rating unavailable</span>';
+            }
+            console.warn('[LiveRating] Failed to fetch stats for store', store.title, err);
+        });
     });
     lucide.createIcons(); // Re-initialize icons for new elements
 }
@@ -342,19 +377,15 @@ function createStoreCard(store) {
     card.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer';
     card.addEventListener('click', () => openStoreModal(store.id));
 
-    const stars = createStars(store.rating);
+    // Only use the new live rating placeholder logic
+    const ratingHtml = `<div class="store-rating-container flex items-center mb-2"><span class="text-xs text-gray-400">Loading rating...</span></div>`;
 
     card.innerHTML = `
         <img src="${store.image}" alt="${store.title}" class="w-full h-48 object-cover" loading="lazy">
         <div class="p-4">
             <h3 class="text-lg font-semibold text-gray-800">${store.title}</h3>
             <p class="text-gray-600 text-sm mb-2">${store.description}</p>
-            <div class="flex items-center mb-2">
-                <div class="flex text-yellow-400">
-                    ${stars}
-                </div>
-                <span class="ml-2 text-sm text-gray-600">${store.rating}</span>
-            </div>
+            ${ratingHtml}
             <div class="flex items-center text-sm text-gray-500 mb-4">
                 <i data-lucide="map-pin" class="h-4 w-4 mr-1"></i>
                 ${store.location}
@@ -422,8 +453,25 @@ async function openStoreModal(storeId) {
         modalStoreImage.alt = storeDetails.name;
         modalStoreName.textContent = storeDetails.name;
         modalStoreDescription.textContent = storeDetails.description || 'Quality products available';
-        modalStoreStars.innerHTML = createStars(parseFloat(storeDetails.average_rating) || 0);
-        modalStoreRating.textContent = parseFloat(storeDetails.average_rating).toFixed(1) || '0.0';
+        // Show loading state for stars and rating
+        modalStoreStars.innerHTML = '<span class="text-xs text-gray-400">Loading rating...</span>';
+        modalStoreRating.textContent = '...';
+
+        // Fetch live rating stats for this store
+        try {
+            const stats = await api.get(`/ratings/store/${storeId}/stats/`);
+            if (stats.total_ratings && parseFloat(stats.average_rating) > 0) {
+                modalStoreStars.innerHTML = createStars(parseFloat(stats.average_rating));
+                modalStoreRating.textContent = `${parseFloat(stats.average_rating).toFixed(1)}${stats.total_ratings ? ` (${stats.total_ratings} review${stats.total_ratings > 1 ? 's' : ''})` : ''}`;
+            } else {
+                modalStoreStars.innerHTML = '<span class="text-sm text-gray-400">No ratings yet</span>';
+                modalStoreRating.textContent = 'No ratings yet';
+            }
+        } catch (err) {
+            modalStoreStars.innerHTML = '<span class="text-xs text-red-400">Rating unavailable</span>';
+            modalStoreRating.textContent = 'Rating unavailable';
+            console.warn('[LiveRating][Modal] Failed to fetch stats for store', storeDetails.name, err);
+        }
         modalStoreLocation.textContent = `${storeDetails.city}, ${storeDetails.state}`;
 
         // Populate products
@@ -445,8 +493,64 @@ async function openStoreModal(storeId) {
         // Initialize icons first
         lucide.createIcons();
 
-        // Initialize rating functionality
-        initializeRatingSystem(storeId);
+        // Fetch two random reviews for this store
+        let reviewsHtml = '';
+        try {
+            const ratingsResp = await api.get(`/ratings/?store=${storeId}`);
+            const reviews = (ratingsResp.results || []).filter(r => r.review && r.review.trim().length > 0);
+            // Shuffle and pick two random reviews
+            for (let i = reviews.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [reviews[i], reviews[j]] = [reviews[j], reviews[i]];
+            }
+            const selected = reviews.slice(0, 2);
+            if (selected.length > 0) {
+                reviewsHtml = '<div class="mt-4"><h4 class="text-sm font-medium text-gray-700 mb-2">Recent Reviews</h4>';
+                selected.forEach(r => {
+                    reviewsHtml += `<div class="mb-3 p-3 bg-gray-100 rounded-lg"><div class="flex items-center gap-2 mb-1"><span class="font-semibold text-gray-800 text-xs">${r.buyer_name || 'User'}</span><span class="text-yellow-400 text-xs">${'★'.repeat(r.rating)}</span></div><div class="text-xs text-gray-700">${r.review}</div></div>`;
+                });
+                reviewsHtml += '</div>';
+            }
+        } catch (err) {
+            console.warn('[LiveRating][Modal] Failed to fetch reviews for store', storeId, err);
+        }
+
+        // Check if user has rated this store (by store ID)
+        let userHasRated = false;
+        try {
+            const myRatingsResp = await api.get('/ratings/my-ratings/');
+            if (myRatingsResp && myRatingsResp.results) {
+                userHasRated = myRatingsResp.results.some(r => r.store_id === storeId || r.store === storeId);
+            }
+        } catch (err) {
+            console.warn('[LiveRating][Modal] Failed to fetch my ratings', err);
+        }
+
+        // Update rating section message
+        const ratingSection = document.querySelector('.mt-4.p-4.bg-gray-50.rounded-lg');
+        if (ratingSection) {
+            if (userHasRated) {
+                ratingSection.innerHTML = `<h4 class="text-sm font-medium text-gray-700 mb-2">You have rated this store</h4><p class="text-xs text-green-600 mt-1">Thank you for your feedback!</p>`;
+            } else {
+                ratingSection.innerHTML = `<h4 class="text-sm font-medium text-gray-700 mb-2">Store Ratings</h4><div class="flex items-center gap-2 text-sm text-gray-600"><i data-lucide="info" class="h-4 w-4"></i><span>You can rate this store after completing a purchase</span></div><p class="text-xs text-gray-500 mt-2">Ratings can be submitted from your confirmed orders</p>`;
+            }
+        }
+
+
+        // Remove any previous reviews section to prevent review leakage between stores
+        const prevReviewsSection = document.querySelector('.store-modal-reviews-section');
+        if (prevReviewsSection) {
+            prevReviewsSection.remove();
+        }
+
+        // Insert reviews below the rating section, if any
+        if (ratingSection && reviewsHtml) {
+            // Add a unique class to the reviews section for easy removal next time
+            const reviewsHtmlWithClass = reviewsHtml.replace('<div class="mt-4"', '<div class="mt-4 store-modal-reviews-section"');
+            ratingSection.insertAdjacentHTML('afterend', reviewsHtmlWithClass);
+        }
+
+        lucide.createIcons();
         
     } catch (error) {
         console.error('Error loading store details:', error);

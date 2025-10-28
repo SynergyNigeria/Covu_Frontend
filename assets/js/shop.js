@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function openStoreModal() {
+    async function openStoreModal() {
         const modal = document.getElementById('storeModal');
         if (modal) {
             modal.classList.remove('hidden');
@@ -179,71 +179,67 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Load current values
             loadStoreDetailsData();
 
-            // Re-render icons
-            setTimeout(() => {
-                lucide.createIcons();
-            }, 100);
-        }
-    }
+            // Fetch and update store ratings and user rating for this store
+            try {
+                if (!currentStore || !currentStore.id) {
+                    console.debug('[StoreModal] No currentStore or missing id');
+                    return;
+                }
+                // Fetch store stats (average rating, total ratings)
+                const stats = await api.get(`/ratings/store/${currentStore.id}/stats/`);
+                console.debug('[StoreModal] Store stats API response:', stats);
+                // Fetch user's ratings for this store
+                const myRatingsResp = await api.get(`/ratings/my-ratings/`);
+                console.debug('[StoreModal] My ratings API response:', myRatingsResp);
+                let myStoreRatings = [];
+                if (myRatingsResp && myRatingsResp.results) {
+                    myStoreRatings = myRatingsResp.results.filter(r => r.product_name && currentStore.name && r.product_name.includes(currentStore.name));
+                }
+                console.debug('[StoreModal] Filtered myStoreRatings:', myStoreRatings);
 
-    function openWithdrawalModal() {
-        const modal = document.getElementById('withdrawalModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-
-            // Reset form
-            document.getElementById('withdrawalForm').reset();
-            document.getElementById('bankDetails').classList.add('hidden');
-            document.getElementById('withdrawalSummary').classList.add('hidden');
-
-            // Re-render icons
-            setTimeout(() => {
-                lucide.createIcons();
-            }, 100);
-        }
-    }
-
-    function closeAllModals() {
-        const modals = ['deliveryModal', 'contactModal', 'storeModal', 'withdrawalModal'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+                // Update stars and review count
+                const starsEl = document.getElementById('modalStoreStars');
+                const ratingEl = document.getElementById('modalStoreRating');
+                if (starsEl && stats.average_rating !== undefined) {
+                    const avg = parseFloat(stats.average_rating);
+                    console.debug('[StoreModal] Calculated avg:', avg);
+                    let starsHtml = '';
+                    for (let i = 1; i <= 5; i++) {
+                        if (avg >= i) {
+                            starsHtml += `<i data-lucide="star" class="h-5 w-5 text-yellow-400"></i>`;
+                        } else if (avg > i - 1 && avg < i) {
+                            starsHtml += `<i data-lucide="star-half" class="h-5 w-5 text-yellow-400"></i>`;
+                        } else {
+                            starsHtml += `<i data-lucide="star" class="h-5 w-5 text-gray-300"></i>`;
+                        }
+                    }
+                    starsEl.innerHTML = starsHtml;
+                    console.debug('[StoreModal] Rendered starsHtml:', starsHtml);
+                } else {
+                    console.debug('[StoreModal] starsEl missing or stats.average_rating undefined', starsEl, stats.average_rating);
+                }
+                if (ratingEl && stats.average_rating !== undefined) {
+                    if (parseFloat(stats.average_rating) > 0) {
+                        ratingEl.textContent = stats.average_rating + (stats.total_ratings ? ` (${stats.total_ratings} reviews)` : '');
+                    } else {
+                        ratingEl.textContent = 'No ratings yet';
+                    }
+                    console.debug('[StoreModal] Updated ratingEl:', ratingEl.textContent);
+                } else {
+                    console.debug('[StoreModal] ratingEl missing or stats.average_rating undefined', ratingEl, stats.average_rating);
+                }
+                // Update rating message
+                const ratingMsg = document.getElementById('ratingMessage');
+                if (myStoreRatings.length > 0) {
+                    ratingMsg.textContent = `You rated this seller ${myStoreRatings.length} time${myStoreRatings.length > 1 ? 's' : ''}`;
+                } else {
+                    ratingMsg.textContent = 'You can rate this store after completing a purchase. Ratings can be submitted from your confirmed orders.';
+                }
+                console.debug('[StoreModal] Updated ratingMsg:', ratingMsg.textContent);
+            } catch (err) {
+                console.warn('Could not fetch store/user ratings:', err);
             }
-        });
-        document.body.style.overflow = 'auto';
-    }
-
-    // Modal Event Listeners
-    const closeDeliveryModal = document.getElementById('closeDeliveryModal');
-    const cancelDelivery = document.getElementById('cancelDelivery');
-    const deliveryForm = document.getElementById('deliveryForm');
-
-    if (closeDeliveryModal) {
-        closeDeliveryModal.addEventListener('click', closeAllModals);
-    }
-    if (cancelDelivery) {
-        cancelDelivery.addEventListener('click', closeAllModals);
-    }
-    if (deliveryForm) {
-        deliveryForm.addEventListener('submit', handleDeliverySubmit);
-    }
-
-    const closeContactModal = document.getElementById('closeContactModal');
-    const cancelContact = document.getElementById('cancelContact');
-    const contactForm = document.getElementById('contactForm');
-
-    if (closeContactModal) {
-        closeContactModal.addEventListener('click', closeAllModals);
-    }
-    if (cancelContact) {
-        cancelContact.addEventListener('click', closeAllModals);
-    }
-    if (contactForm) {
-        contactForm.addEventListener('submit', handleContactSubmit);
+        }
     }
 
     const closeStoreModal = document.getElementById('closeStoreModal');
@@ -819,7 +815,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Close all modals function
+    function closeAllModals() {
+        const modalIds = ['deliveryModal', 'contactModal', 'storeModal', 'withdrawalModal'];
+        modalIds.forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        });
+        document.body.style.overflow = '';
+    }
+
     // Make functions globally available
     window.showToast = showToast;
     window.openStoreConfigModal = openStoreConfigModal;
+    window.closeAllModals = closeAllModals;
 });
