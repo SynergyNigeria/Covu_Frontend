@@ -153,23 +153,6 @@
                     </div>
                 </div>
 
-                <!-- Contact Information Card -->
-                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="openStoreConfigModal('contact')">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                            <i data-lucide="phone" class="h-6 w-6 text-green-600"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Contact Info</h3>
-                            <p class="text-sm text-gray-600">Update contact details</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">Manage details</span>
-                        <i data-lucide="chevron-right" class="h-5 w-5 text-gray-400"></i>
-                    </div>
-                </div>
-
                 <!-- Store Details Card -->
                 <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="openStoreConfigModal('store')">
                     <div class="flex items-center gap-3 mb-4">
@@ -245,7 +228,7 @@
                 </div>
 
                 <form id="deliveryForm" class="p-6 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-blue-50 rounded-xl p-6 border border-blue-100">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Same Location Delivery</h3>
                             <div class="space-y-4">
@@ -261,7 +244,7 @@
                         </div>
 
                         <div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Outside Location Delivery</h3>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Outside LGA Delivery</h3>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Rate</label>
@@ -270,7 +253,21 @@
                                         <input type="number" id="deliveryRateOutsideModal" class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg" placeholder="1000" min="0">
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-600">Rate for deliveries to different locations/areas</p>
+                                <p class="text-sm text-gray-600">Rate for deliveries to different LGAs</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-pink-50 rounded-xl p-6 border border-pink-100">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Outside State Delivery</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Rate</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₦</span>
+                                        <input type="number" id="deliveryRateOutsideStateModal" class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg" placeholder="2000" min="0">
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">Rate for deliveries to other states</p>
                             </div>
                         </div>
                     </div>
@@ -288,56 +285,6 @@
         </div>
     </div>
 
-    <!-- Contact Information Modal -->
-    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                            <i data-lucide="phone" class="h-5 w-5 text-green-600"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">Contact Information</h2>
-                            <p class="text-sm text-gray-600">Update your contact details</p>
-                        </div>
-                    </div>
-                    <button id="closeContactModal" class="text-gray-400 hover:text-gray-600 active:text-gray-800 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-95">
-                        <i data-lucide="x" class="h-6 w-6"></i>
-                    </button>
-                </div>
-
-                <form id="contactForm" class="p-6 space-y-6">
-                    <div class="bg-green-50 rounded-xl p-6 border border-green-100">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Contact Details</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="whatsappNumberModal" class="block text-sm font-medium text-gray-700 mb-2">WhatsApp Number</label>
-                                <input type="tel" id="whatsappNumberModal" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg" placeholder="+234 123 456 7890">
-                            </div>
-                            <div>
-                                <label for="emailModal" class="block text-sm font-medium text-gray-700 mb-2">Email Address (Optional)</label>
-                                <input type="email" id="emailModal" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg" placeholder="your@email.com">
-                            </div>
-                            <div>
-                                <label for="addressModal" class="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
-                                <textarea id="addressModal" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 text-lg resize-none" placeholder="Enter your business address"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4 pt-4">
-                        <button type="button" id="cancelContact" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 font-medium active:scale-95">
-                            Cancel
-                        </button>
-                        <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 active:from-green-700 active:to-emerald-800 transition-all duration-200 font-medium active:scale-95">
-                            Save Contact Info
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <!-- Store Details Modal -->
     <div id="storeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
@@ -393,7 +340,7 @@
                         <button type="button" id="cancelStore" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 font-medium active:scale-95">
                             Cancel
                         </button>
-                        <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 active:from-purple-700 active:to-pink-800 transition-all duration-200 font-medium active:scale-95">
+                        <button type="submit" class="flex-1 px-6 py-3 bg-purple-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 active:from-purple-700 active:to-pink-800 transition-all duration-200 font-medium active:scale-95">
                             Save Store Details
                         </button>
                     </div>

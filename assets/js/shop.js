@@ -32,6 +32,18 @@ function waitForAPI() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    // Delivery Modal: X and Cancel buttons
+    const closeDeliveryModal = document.getElementById('closeDeliveryModal');
+    const cancelDelivery = document.getElementById('cancelDelivery');
+    if (closeDeliveryModal) {
+        closeDeliveryModal.addEventListener('click', closeAllModals);
+    }
+    if (cancelDelivery) {
+        cancelDelivery.addEventListener('click', closeAllModals);
+    }
+
+    // Store Modal: X and Cancel buttons
+    // (These are already handled below, but ensure they are set after DOMContentLoaded)
     // Initialize Lucide icons
     lucide.createIcons();
 
@@ -128,6 +140,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Open the specific modal
         if (type === 'delivery') {
             openDeliveryModal();
+            // Attach submit handler (ensure only one listener)
+            const deliveryForm = document.getElementById('deliveryForm');
+            if (deliveryForm) {
+                deliveryForm.removeEventListener('submit', handleDeliverySubmit);
+                deliveryForm.addEventListener('submit', handleDeliverySubmit);
+            }
         } else if (type === 'contact') {
             openContactModal();
         } else if (type === 'store') {
@@ -433,12 +451,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             try {
                 const allStoresResponse = await apiRequest('GET', API_CONFIG.ENDPOINTS.STORES);
                 const allStores = allStoresResponse.results || allStoresResponse.data?.results || [];
+                // Only match by seller_id or seller (never by name)
                 const userStore = allStores.find(store => 
                     store.seller_id === currentUser.id || 
-                    store.seller === currentUser.id ||
-                    store.seller_name === currentUser.full_name
+                    store.seller === currentUser.id
                 );
-                
                 if (userStore) {
                     currentStore = await loadStoreDetails(userStore.id);
                 } else {
@@ -605,12 +622,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const deliveryRateSameEl = document.getElementById('deliveryRateSameModal');
         const deliveryRateOutsideEl = document.getElementById('deliveryRateOutsideModal');
+        const deliveryRateOutsideStateEl = document.getElementById('deliveryRateOutsideStateModal');
 
         if (deliveryRateSameEl) {
             deliveryRateSameEl.value = currentStore.delivery_within_lga || '';
         }
         if (deliveryRateOutsideEl) {
             deliveryRateOutsideEl.value = currentStore.delivery_outside_lga || '';
+        }
+        if (deliveryRateOutsideStateEl) {
+            deliveryRateOutsideStateEl.value = currentStore.delivery_outside_state || '';
         }
     }
 
@@ -643,27 +664,40 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Show 60-day edit info if needed
         const editInfo = document.getElementById('storeEditInfo');
         if (editInfo) {
-            if (currentStore.updated_at) {
+            if (currentStore.updated_at && currentStore.created_at) {
                 const lastEdit = new Date(currentStore.updated_at);
+                const created = new Date(currentStore.created_at);
                 const now = new Date();
                 const diffDays = Math.floor((now - lastEdit) / (1000 * 60 * 60 * 24));
-                if (diffDays > 60) {
-                    editInfo.textContent = 'You can only edit your store within 60 days of the last update. Please contact support if you need further changes.';
-                    editInfo.classList.remove('hidden');
-                    if (nameEl) nameEl.disabled = true;
-                    if (descriptionEl) descriptionEl.disabled = true;
-                    if (categoryEl) categoryEl.disabled = true;
-                    const submitBtn = document.querySelector('#storeForm button[type="submit"]');
-                    if (submitBtn) submitBtn.disabled = true;
+                // Only enforce 60-day rule if store has been edited at least once
+                if (currentStore.updated_at !== currentStore.created_at) {
+                    if (diffDays > 60) {
+                        editInfo.textContent = 'You can only edit your store within 60 days of the last update. Please contact support if you need further changes.';
+                        editInfo.classList.remove('hidden');
+                        if (nameEl) nameEl.disabled = true;
+                        if (descriptionEl) descriptionEl.disabled = true;
+                        if (categoryEl) categoryEl.disabled = true;
+                        const submitBtn = document.querySelector('#storeForm button[type="submit"]');
+                        if (submitBtn) submitBtn.disabled = true;
+                    } else {
+                        const daysLeft = 60 - diffDays;
+                        editInfo.textContent = `You can edit your store again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+                        editInfo.classList.remove('hidden');
+                        if (nameEl) nameEl.disabled = true;
+                        if (descriptionEl) descriptionEl.disabled = true;
+                        if (categoryEl) categoryEl.disabled = true;
+                        const submitBtn = document.querySelector('#storeForm button[type="submit"]');
+                        if (submitBtn) submitBtn.disabled = true;
+                    }
                 } else {
-                    const daysLeft = 60 - diffDays;
-                    editInfo.textContent = `You can edit your store again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+                    // Store has never been edited, allow editing
+                    editInfo.textContent = 'You can edit your store details now.';
                     editInfo.classList.remove('hidden');
-                    if (nameEl) nameEl.disabled = true;
-                    if (descriptionEl) descriptionEl.disabled = true;
-                    if (categoryEl) categoryEl.disabled = true;
+                    if (nameEl) nameEl.disabled = false;
+                    if (descriptionEl) descriptionEl.disabled = false;
+                    if (categoryEl) categoryEl.disabled = false;
                     const submitBtn = document.querySelector('#storeForm button[type="submit"]');
-                    if (submitBtn) submitBtn.disabled = true;
+                    if (submitBtn) submitBtn.disabled = false;
                 }
             } else {
                 editInfo.textContent = 'Note: Store details can only be edited within 60 days of your last update.';
@@ -677,13 +711,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const deliveryRateSame = parseFloat(document.getElementById('deliveryRateSameModal').value);
         const deliveryRateOutside = parseFloat(document.getElementById('deliveryRateOutsideModal').value);
+        const deliveryRateOutsideState = parseFloat(document.getElementById('deliveryRateOutsideStateModal').value);
 
-        if (isNaN(deliveryRateSame) || isNaN(deliveryRateOutside)) {
+        if (isNaN(deliveryRateSame) || isNaN(deliveryRateOutside) || isNaN(deliveryRateOutsideState)) {
             showToast('Please enter valid delivery rates', 'error');
             return;
         }
 
-        if (deliveryRateSame < 0 || deliveryRateOutside < 0) {
+        if (deliveryRateSame < 0 || deliveryRateOutside < 0 || deliveryRateOutsideState < 0) {
             showToast('Delivery rates must be positive numbers', 'error');
             return;
         }
@@ -698,7 +733,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Update store via API
             const updateData = {
                 delivery_within_lga: deliveryRateSame,
-                delivery_outside_lga: deliveryRateOutside
+                delivery_outside_lga: deliveryRateOutside,
+                delivery_outside_state: deliveryRateOutsideState
             };
 
             const updatedStore = await apiRequest('PATCH', API_CONFIG.ENDPOINTS.STORE_DETAIL(currentStore.id), updateData);
@@ -706,6 +742,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Update local store data
             currentStore.delivery_within_lga = updatedStore.delivery_within_lga;
             currentStore.delivery_outside_lga = updatedStore.delivery_outside_lga;
+            currentStore.delivery_outside_state = updatedStore.delivery_outside_state;
 
             showToast('Delivery settings saved successfully!', 'success');
             closeAllModals();
