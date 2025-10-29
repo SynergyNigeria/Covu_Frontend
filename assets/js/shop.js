@@ -230,12 +230,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 // Update rating message
                 const ratingMsg = document.getElementById('ratingMessage');
-                if (myStoreRatings.length > 0) {
-                    ratingMsg.textContent = `You rated this seller ${myStoreRatings.length} time${myStoreRatings.length > 1 ? 's' : ''}`;
-                } else {
-                    ratingMsg.textContent = 'You can rate this store after completing a purchase. Ratings can be submitted from your confirmed orders.';
+                if (ratingMsg) {
+                    if (myStoreRatings.length > 0) {
+                        ratingMsg.textContent = `You rated this seller ${myStoreRatings.length} time${myStoreRatings.length > 1 ? 's' : ''}`;
+                    } else {
+                        ratingMsg.textContent = 'You can rate this store after completing a purchase. Ratings can be submitted from your confirmed orders.';
+                    }
+                    console.debug('[StoreModal] Updated ratingMsg:', ratingMsg.textContent);
                 }
-                console.debug('[StoreModal] Updated ratingMsg:', ratingMsg.textContent);
             } catch (err) {
                 console.warn('Could not fetch store/user ratings:', err);
             }
@@ -637,6 +639,37 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (nameEl) nameEl.value = currentStore.name || '';
         if (descriptionEl) descriptionEl.value = currentStore.description || '';
         if (categoryEl) categoryEl.value = currentStore.category || '';
+
+        // Show 60-day edit info if needed
+        const editInfo = document.getElementById('storeEditInfo');
+        if (editInfo) {
+            if (currentStore.updated_at) {
+                const lastEdit = new Date(currentStore.updated_at);
+                const now = new Date();
+                const diffDays = Math.floor((now - lastEdit) / (1000 * 60 * 60 * 24));
+                if (diffDays > 60) {
+                    editInfo.textContent = 'You can only edit your store within 60 days of the last update. Please contact support if you need further changes.';
+                    editInfo.classList.remove('hidden');
+                    if (nameEl) nameEl.disabled = true;
+                    if (descriptionEl) descriptionEl.disabled = true;
+                    if (categoryEl) categoryEl.disabled = true;
+                    const submitBtn = document.querySelector('#storeForm button[type="submit"]');
+                    if (submitBtn) submitBtn.disabled = true;
+                } else {
+                    const daysLeft = 60 - diffDays;
+                    editInfo.textContent = `You can edit your store again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+                    editInfo.classList.remove('hidden');
+                    if (nameEl) nameEl.disabled = true;
+                    if (descriptionEl) descriptionEl.disabled = true;
+                    if (categoryEl) categoryEl.disabled = true;
+                    const submitBtn = document.querySelector('#storeForm button[type="submit"]');
+                    if (submitBtn) submitBtn.disabled = true;
+                }
+            } else {
+                editInfo.textContent = 'Note: Store details can only be edited within 60 days of your last update.';
+                editInfo.classList.remove('hidden');
+            }
+        }
     }
 
     async function handleDeliverySubmit(e) {
@@ -699,7 +732,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const description = document.getElementById('storeDescriptionModal').value.trim();
         const category = document.getElementById('storeCategoryModal').value;
 
-        if (!name || !description) {
+        if (!name || !description || !category) {
             showToast('Please fill in all required fields', 'error');
             return;
         }
@@ -724,7 +757,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Update store via API
             const updateData = {
                 name: name,
-                description: description
+                description: description,
+                category: category
             };
 
             const updatedStore = await apiRequest('PATCH', API_CONFIG.ENDPOINTS.STORE_DETAIL(currentStore.id), updateData);
@@ -732,6 +766,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Update local store data
             currentStore.name = updatedStore.name;
             currentStore.description = updatedStore.description;
+            currentStore.category = updatedStore.category;
 
             // Update UI immediately
             const storeNameEl = document.getElementById('storeName');
@@ -745,7 +780,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         } catch (error) {
             console.error('Error updating store details:', error);
-            showToast('Failed to save store details. Please try again.', 'error');
+            // Handle 60-day edit limit error
+            if (error && error.response && error.response.status === 403 && error.response.data && error.response.data.error && error.response.data.error.includes('60 days')) {
+                showToast(error.response.data.error, 'error');
+                // Optionally, reload store data to update UI
+                await loadUserStore();
+                loadStoreDetailsData();
+            } else {
+                showToast('Failed to save store details. Please try again.', 'error');
+            }
         }
     }
 
