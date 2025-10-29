@@ -515,24 +515,47 @@ async function openStoreModal(storeId) {
             console.warn('[LiveRating][Modal] Failed to fetch reviews for store', storeId, err);
         }
 
-        // Check if user has rated this store (by store ID)
+        // Check if user has rated this store (by store ID) and get their rating value
         let userHasRated = false;
+        let userRatingValue = null;
         try {
             const myRatingsResp = await api.get('/ratings/my-ratings/');
-            if (myRatingsResp && myRatingsResp.results) {
-                userHasRated = myRatingsResp.results.some(r => r.store_id === storeId || r.store === storeId);
+            const myRatings = myRatingsResp && (myRatingsResp.results || myRatingsResp) || [];
+            if (Array.isArray(myRatings)) {
+                const found = myRatings.find(r => {
+                    const sid = r.store_id ?? (r.store && (r.store.id ?? r.store));
+                    return String(sid) === String(storeId);
+                });
+                if (found) {
+                    userHasRated = true;
+                    userRatingValue = found.rating;
+                }
             }
         } catch (err) {
             console.warn('[LiveRating][Modal] Failed to fetch my ratings', err);
         }
 
         // Update rating section message
-        const ratingSection = document.querySelector('.mt-4.p-4.bg-gray-50.rounded-lg');
+    const ratingSection = document.getElementById('modalRatingSection');
         if (ratingSection) {
             if (userHasRated) {
-                ratingSection.innerHTML = `<h4 class="text-sm font-medium text-gray-700 mb-2">You have rated this store</h4><p class="text-xs text-green-600 mt-1">Thank you for your feedback!</p>`;
+                ratingSection.innerHTML = `
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">You have already rated this store</h4>
+                    <div class="flex items-center gap-2 text-green-600 text-sm mb-1">
+                        <span>Thank you for your rating!</span>
+                        ${userRatingValue ? `<span class="text-yellow-400 text-xs ml-2">${'★'.repeat(userRatingValue)}</span>` : ''}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">You can only rate a store once per purchase.</p>
+                `;
             } else {
-                ratingSection.innerHTML = `<h4 class="text-sm font-medium text-gray-700 mb-2">Store Ratings</h4><div class="flex items-center gap-2 text-sm text-gray-600"><i data-lucide="info" class="h-4 w-4"></i><span>You can rate this store after completing a purchase</span></div><p class="text-xs text-gray-500 mt-2">Ratings can be submitted from your confirmed orders</p>`;
+                ratingSection.innerHTML = `
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Store Ratings</h4>
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <i data-lucide="info" class="h-4 w-4"></i>
+                        <span>You can rate this store after completing a purchase</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Ratings can be submitted from your confirmed orders</p>
+                `;
             }
         }
 
@@ -569,15 +592,8 @@ function closeStoreModal() {
 function initializeRatingSystem(storeId) {
     const ratingSection = document.querySelector('.mt-4.p-4.bg-gray-50.rounded-lg');
     
-    // Update rating section to show info message
-    ratingSection.innerHTML = `
-        <h4 class="text-sm font-medium text-gray-700 mb-2">Store Ratings</h4>
-        <div class="flex items-center gap-2 text-sm text-gray-600">
-            <i data-lucide="info" class="h-4 w-4"></i>
-            <span>You can rate this store after completing a purchase</span>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Ratings can be submitted from your confirmed orders</p>
-    `;
+    // Do not set any default message here; openStoreModal will set the correct message dynamically
+    ratingSection.innerHTML = '';
     
     // Re-initialize icons
     lucide.createIcons();
