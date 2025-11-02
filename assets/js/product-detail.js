@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadProductDetails();
     setupBuyNowButton();
     setupBackButton();
+    setupImageLightbox();
     lucide.createIcons();
 });
 
@@ -129,8 +130,13 @@ function populateProductDetails(product) {
     const storeRating = document.getElementById('storeRating');
 
     if (product.store_info) {
-        if (storeImage && product.store_info.logo) {
-            storeImage.src = product.store_info.logo;
+        if (storeImage) {
+            // Use seller_photo for transparency (shows actual seller's face)
+            // Fallback to default if no photo uploaded yet
+            const sellerPhoto = product.store_info.seller_photo && product.store_info.seller_photo.startsWith('http')
+                ? product.store_info.seller_photo
+                : 'https://res.cloudinary.com/dpmxcjkfl/image/upload/v1762100746/covu-flyer_hotir6.png';
+            storeImage.src = sellerPhoto;
         }
         if (storeName) storeName.textContent = product.store_info.name;
         if (storeLocation) {
@@ -319,6 +325,55 @@ function setupBackButton() {
         backButton.addEventListener('click', () => {
             window.history.back();
         });
+    }
+}
+
+// Setup image lightbox functionality
+function setupImageLightbox() {
+    const productImageContainer = document.getElementById('productImageContainer');
+    const productImage = document.getElementById('productImage');
+    const imageLightbox = document.getElementById('imageLightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const closeLightbox = document.getElementById('closeLightbox');
+
+    if (productImageContainer && imageLightbox) {
+        // Open lightbox when clicking product image
+        productImageContainer.addEventListener('click', () => {
+            if (productImage.src) {
+                lightboxImage.src = productImage.src;
+                imageLightbox.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+                lucide.createIcons(); // Initialize icons in lightbox
+            }
+        });
+
+        // Close lightbox when clicking close button
+        if (closeLightbox) {
+            closeLightbox.addEventListener('click', closeLightboxModal);
+        }
+
+        // Close lightbox when clicking outside image
+        imageLightbox.addEventListener('click', (e) => {
+            if (e.target === imageLightbox) {
+                closeLightboxModal();
+            }
+        });
+
+        // Close lightbox with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !imageLightbox.classList.contains('hidden')) {
+                closeLightboxModal();
+            }
+        });
+    }
+}
+
+// Close lightbox modal
+function closeLightboxModal() {
+    const imageLightbox = document.getElementById('imageLightbox');
+    if (imageLightbox) {
+        imageLightbox.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore scrolling
     }
 }
 

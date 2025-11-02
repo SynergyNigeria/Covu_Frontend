@@ -61,8 +61,14 @@
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
             <div class="md:flex">
                 <!-- Product Image -->
-                <div class="md:w-1/2">
+                <div class="md:w-1/2 relative group cursor-pointer" id="productImageContainer">
                     <img id="productImage" src="" alt="Product" class="w-full h-96 md:h-[500px] object-cover">
+                    <!-- Hover overlay to indicate clickable -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-3">
+                            <i data-lucide="zoom-in" class="h-6 w-6 text-gray-800"></i>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Product Info -->
@@ -155,22 +161,44 @@
         </div>
     </nav>
 
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightbox" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+        <button id="closeLightbox" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
+            <i data-lucide="x" class="h-8 w-8"></i>
+        </button>
+        <img id="lightboxImage" src="" alt="Product Full View" class="max-w-full max-h-full object-contain">
+    </div>
+
     <!-- Add padding to body to account for fixed nav -->
     <style>
         body {
             padding-bottom: 80px;
         }
+        
+        /* Lightbox styles */
+        #imageLightbox {
+            backdrop-filter: blur(4px);
+        }
+        
+        #lightboxImage {
+            animation: zoomIn 0.3s ease-out;
+        }
+        
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 
     <!-- Backend API Integration -->
-    <script src="/assets/js/config.js" defer></script>
-    <script src="/assets/js/api.js" defer></script>
-    <script>
-        // Check authentication before loading page
-        if (!api.isAuthenticated()) {
-            window.location.href = 'login.html';
-        }
-    </script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/api.js"></script>
     <script src="/assets/js/product-detail.js"></script>
     <script src="/assets/js/global-rating.js" defer></script>
 </body>

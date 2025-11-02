@@ -10,6 +10,10 @@ let storeStats = {
     storeRating: 0.0
 };
 
+// Track newly uploaded images (not yet saved to database)
+let pendingLogoUpload = null;
+let pendingSellerPhotoUpload = null;
+
 // Initialize API handler
 // let api = null;
 
@@ -196,6 +200,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             // Load current values
             loadStoreDetailsData();
+
+            // Re-render icons for upload buttons
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 100);
 
             // Fetch and update store ratings and user rating for this store
             try {
@@ -661,6 +670,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (descriptionEl) descriptionEl.value = currentStore.description || '';
         if (categoryEl) categoryEl.value = currentStore.category || '';
 
+        // Restore pending uploads from sessionStorage (in case of page reload)
+        pendingLogoUpload = sessionStorage.getItem('pendingLogoUpload');
+        pendingSellerPhotoUpload = sessionStorage.getItem('pendingSellerPhotoUpload');
+
+        // Load current logo preview (prefer pending upload over saved logo)
+        const logoPreview = document.getElementById('storeLogoPreview');
+        if (logoPreview) {
+            if (pendingLogoUpload) {
+                logoPreview.src = pendingLogoUpload;
+            } else if (currentStore.logo) {
+                logoPreview.src = currentStore.logo;
+            }
+        }
+
+        // Load current seller photo preview (prefer pending upload over saved photo)
+        const photoPreview = document.getElementById('sellerPhotoPreview');
+        if (photoPreview) {
+            if (pendingSellerPhotoUpload) {
+                photoPreview.src = pendingSellerPhotoUpload;
+            } else if (currentStore.seller_photo) {
+                photoPreview.src = currentStore.seller_photo;
+            }
+        }
+
+        // Setup image upload handlers
+        setupImageUploadHandlers();
+
         // Show 60-day edit info if needed
         const editInfo = document.getElementById('storeEditInfo');
         if (editInfo) {
@@ -669,35 +705,69 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const created = new Date(currentStore.created_at);
                 const now = new Date();
                 const diffDays = Math.floor((now - lastEdit) / (1000 * 60 * 60 * 24));
-                // Only enforce 60-day rule if store has been edited at least once
+                // Enforce 60-day lock: After ANY edit, user must wait 60 days before editing again
                 if (currentStore.updated_at !== currentStore.created_at) {
-                    if (diffDays > 60) {
-                        editInfo.textContent = 'You can only edit your store within 60 days of the last update. Please contact support if you need further changes.';
-                        editInfo.classList.remove('hidden');
-                        if (nameEl) nameEl.disabled = true;
-                        if (descriptionEl) descriptionEl.disabled = true;
-                        if (categoryEl) categoryEl.disabled = true;
-                        const submitBtn = document.querySelector('#storeForm button[type="submit"]');
-                        if (submitBtn) submitBtn.disabled = true;
-                    } else {
+                    // Store has been edited before - check if 60 days have passed
+                    if (diffDays < 60) {
+                        // LESS than 60 days - LOCKED (must wait)
                         const daysLeft = 60 - diffDays;
-                        editInfo.textContent = `You can edit your store again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+                        editInfo.textContent = `Store details are locked. You can edit again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Images can be updated anytime.`;
                         editInfo.classList.remove('hidden');
-                        if (nameEl) nameEl.disabled = true;
-                        if (descriptionEl) descriptionEl.disabled = true;
-                        if (categoryEl) categoryEl.disabled = true;
-                        const submitBtn = document.querySelector('#storeForm button[type="submit"]');
-                        if (submitBtn) submitBtn.disabled = true;
+                        if (nameEl) {
+                            nameEl.disabled = true;
+                            nameEl.style.backgroundColor = '#f3f4f6';
+                            nameEl.style.cursor = 'not-allowed';
+                        }
+                        if (descriptionEl) {
+                            descriptionEl.disabled = true;
+                            descriptionEl.style.backgroundColor = '#f3f4f6';
+                            descriptionEl.style.cursor = 'not-allowed';
+                        }
+                        if (categoryEl) {
+                            categoryEl.disabled = true;
+                            categoryEl.style.backgroundColor = '#f3f4f6';
+                            categoryEl.style.cursor = 'not-allowed';
+                        }
+                        // Don't disable submit button - allow image-only updates
+                    } else {
+                        // 60+ days have passed - UNLOCKED (can edit again)
+                        editInfo.textContent = 'You can edit your store details now. Note: After editing, fields will be locked for 60 days.';
+                        editInfo.classList.remove('hidden');
+                        if (nameEl) {
+                            nameEl.disabled = false;
+                            nameEl.style.backgroundColor = '';
+                            nameEl.style.cursor = '';
+                        }
+                        if (descriptionEl) {
+                            descriptionEl.disabled = false;
+                            descriptionEl.style.backgroundColor = '';
+                            descriptionEl.style.cursor = '';
+                        }
+                        if (categoryEl) {
+                            categoryEl.disabled = false;
+                            categoryEl.style.backgroundColor = '';
+                            categoryEl.style.cursor = '';
+                        }
                     }
                 } else {
-                    // Store has never been edited, allow editing
-                    editInfo.textContent = 'You can edit your store details now.';
+                    // Store has never been edited, allow first edit
+                    editInfo.textContent = 'You can edit your store details now. Note: After editing, fields will be locked for 60 days.';
                     editInfo.classList.remove('hidden');
-                    if (nameEl) nameEl.disabled = false;
-                    if (descriptionEl) descriptionEl.disabled = false;
-                    if (categoryEl) categoryEl.disabled = false;
-                    const submitBtn = document.querySelector('#storeForm button[type="submit"]');
-                    if (submitBtn) submitBtn.disabled = false;
+                    if (nameEl) {
+                        nameEl.disabled = false;
+                        nameEl.style.backgroundColor = '';
+                        nameEl.style.cursor = '';
+                    }
+                    if (descriptionEl) {
+                        descriptionEl.disabled = false;
+                        descriptionEl.style.backgroundColor = '';
+                        descriptionEl.style.cursor = '';
+                    }
+                    if (categoryEl) {
+                        categoryEl.disabled = false;
+                        categoryEl.style.backgroundColor = '';
+                        categoryEl.style.cursor = '';
+                    }
                 }
             } else {
                 editInfo.textContent = 'Note: Store details can only be edited within 60 days of your last update.';
@@ -762,6 +832,153 @@ document.addEventListener('DOMContentLoaded', async function() {
         closeAllModals();
     }
 
+    // Image upload handler setup
+    function setupImageUploadHandlers() {
+        const logoInput = document.getElementById('storeLogoInput');
+        const photoInput = document.getElementById('sellerPhotoInput');
+
+        if (logoInput) {
+            logoInput.addEventListener('change', handleLogoUpload);
+        }
+
+        if (photoInput) {
+            photoInput.addEventListener('change', handleSellerPhotoUpload);
+        }
+    }
+
+    async function handleLogoUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select an image file', 'error');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            showToast('Image size must be less than 5MB', 'error');
+            return;
+        }
+
+        try {
+            // Show upload progress
+            const progressEl = document.getElementById('logoUploadProgress');
+            if (progressEl) progressEl.classList.remove('hidden');
+
+            // Upload to Cloudinary
+            const uploadedUrl = await uploadImageToCloudinary(file, 'store_logos');
+
+            // Update preview
+            const preview = document.getElementById('storeLogoPreview');
+            if (preview) preview.src = uploadedUrl;
+
+            // Store URL for form submission (persist across page reloads)
+            pendingLogoUpload = uploadedUrl;
+            sessionStorage.setItem('pendingLogoUpload', uploadedUrl);
+
+            showToast('Logo uploaded successfully!', 'success');
+
+        } catch (error) {
+            console.error('Error uploading logo:', error);
+            showToast('Failed to upload logo. Please try again.', 'error');
+        } finally {
+            const progressEl = document.getElementById('logoUploadProgress');
+            if (progressEl) progressEl.classList.add('hidden');
+        }
+    }
+
+    async function handleSellerPhotoUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select an image file', 'error');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            showToast('Image size must be less than 5MB', 'error');
+            return;
+        }
+
+        try {
+            // Show upload progress
+            const progressEl = document.getElementById('photoUploadProgress');
+            if (progressEl) progressEl.classList.remove('hidden');
+
+            // Upload to Cloudinary
+            const uploadedUrl = await uploadImageToCloudinary(file, 'seller_photos');
+
+            // Update preview
+            const preview = document.getElementById('sellerPhotoPreview');
+            if (preview) preview.src = uploadedUrl;
+
+            // Store URL for form submission (persist across page reloads)
+            pendingSellerPhotoUpload = uploadedUrl;
+            sessionStorage.setItem('pendingSellerPhotoUpload', uploadedUrl);
+
+            showToast('Photo uploaded successfully!', 'success');
+
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            showToast('Failed to upload photo. Please try again.', 'error');
+        } finally {
+            const progressEl = document.getElementById('photoUploadProgress');
+            if (progressEl) progressEl.classList.add('hidden');
+        }
+    }
+
+    async function uploadImageToCloudinary(file, folder) {
+        const formData = new FormData();
+        formData.append('file', file);
+        // Remove upload_preset for now - we'll use backend upload instead
+        // formData.append('upload_preset', 'ml_default');
+        formData.append('folder', folder);
+
+        // Use backend API to handle Cloudinary upload (more secure)
+        try {
+            const response = await fetch(`${API_CONFIG.BASE_URL}/stores/upload_image/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
+            }
+
+            const data = await response.json();
+            return data.url || data.secure_url;
+        } catch (error) {
+            console.error('Backend upload failed, trying direct Cloudinary upload:', error);
+            
+            // Fallback: Try direct Cloudinary upload without upload_preset
+            // This will work if your Cloudinary account allows unsigned uploads
+            const directFormData = new FormData();
+            directFormData.append('file', file);
+            directFormData.append('folder', folder);
+            
+            const directResponse = await fetch('https://api.cloudinary.com/v1_1/dpmxcjkfl/image/upload', {
+                method: 'POST',
+                body: directFormData
+            });
+
+            if (!directResponse.ok) {
+                const errorData = await directResponse.json();
+                console.error('Cloudinary error:', errorData);
+                throw new Error(errorData.error?.message || 'Upload failed');
+            }
+
+            const directData = await directResponse.json();
+            return directData.secure_url;
+        }
+    }
+
     async function handleStoreSubmit(e) {
         e.preventDefault();
 
@@ -791,12 +1008,37 @@ document.addEventListener('DOMContentLoaded', async function() {
             submitBtn.textContent = 'Saving...';
             submitBtn.disabled = true;
 
-            // Update store via API
-            const updateData = {
-                name: name,
-                description: description,
-                category: category
-            };
+            // Check sessionStorage in case variables were lost (page reload)
+            const logoToUpload = pendingLogoUpload || sessionStorage.getItem('pendingLogoUpload');
+            const photoToUpload = pendingSellerPhotoUpload || sessionStorage.getItem('pendingSellerPhotoUpload');
+
+            // Check if only images are being updated (no text field changes)
+            const isImageOnlyUpdate = (logoToUpload || photoToUpload) && 
+                                      name === currentStore.name && 
+                                      description === currentStore.description && 
+                                      category === currentStore.category;
+
+            // Prepare update data
+            const updateData = {};
+
+            // Always allow image updates (not affected by 60-day limit)
+            if (logoToUpload) {
+                updateData.logo = logoToUpload;
+            }
+            if (photoToUpload) {
+                updateData.seller_photo = photoToUpload;
+            }
+
+            // Add text fields only if they're being changed or if it's image-only update
+            if (isImageOnlyUpdate) {
+                // Image-only update - don't include text fields to avoid 60-day check
+                console.log('Image-only update detected');
+            } else {
+                // Include text fields (will be checked by backend 60-day limit)
+                updateData.name = name;
+                updateData.description = description;
+                updateData.category = category;
+            }
 
             const updatedStore = await apiRequest('PATCH', API_CONFIG.ENDPOINTS.STORE_DETAIL(currentStore.id), updateData);
             
@@ -804,6 +1046,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             currentStore.name = updatedStore.name;
             currentStore.description = updatedStore.description;
             currentStore.category = updatedStore.category;
+            if (updatedStore.logo) currentStore.logo = updatedStore.logo;
+            if (updatedStore.seller_photo) currentStore.seller_photo = updatedStore.seller_photo;
+
+            // Clear pending uploads after successful save
+            pendingLogoUpload = null;
+            pendingSellerPhotoUpload = null;
+            sessionStorage.removeItem('pendingLogoUpload');
+            sessionStorage.removeItem('pendingSellerPhotoUpload');
 
             // Update UI immediately
             const storeNameEl = document.getElementById('storeName');

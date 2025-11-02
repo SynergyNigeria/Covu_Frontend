@@ -190,7 +190,7 @@ function transformStoreData(backendStore) {
     console.debug('[transformStoreData] backendStore:', backendStore);
     return {
         id: backendStore.id,
-        image: backendStore.logo || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+        image: backendStore.logo || 'https://res.cloudinary.com/dpmxcjkfl/image/upload/v1762101365/SELLER_z35tl4.png',
         title: backendStore.name,
         description: backendStore.description || 'Quality products available',
         rating: parseFloat(backendStore.average_rating) || 0,
@@ -448,7 +448,7 @@ async function openStoreModal(storeId) {
         // Ensure logo URL is absolute or use placeholder
         const storeLogo = storeDetails.logo && storeDetails.logo.startsWith('http') 
             ? storeDetails.logo 
-            : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop';
+            : 'https://res.cloudinary.com/dpmxcjkfl/image/upload/v1762102095/covu-flyer_hotir6.png';
         modalStoreImage.src = storeLogo;
         modalStoreImage.alt = storeDetails.name;
         modalStoreName.textContent = storeDetails.name;
@@ -647,11 +647,14 @@ function createProductCard(product) {
     card.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer';
     card.addEventListener('click', () => openProductDetail(product));
 
-    // Get first image or use placeholder - ensure it's a valid URL
-    let productImage = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop';
-    if (product.images && product.images.length > 0) {
+    // Get product image - backend returns single URL string, not array
+    let productImage = 'https://res.cloudinary.com/dpmxcjkfl/image/upload/v1762100746/covu-flyer_hotir6.png';
+    if (product.images && typeof product.images === 'string' && product.images.startsWith('http')) {
+        // Backend returns a single URL string
+        productImage = product.images;
+    } else if (Array.isArray(product.images) && product.images.length > 0) {
+        // Fallback: handle if backend ever returns array
         const img = product.images[0];
-        // Check if it's a valid URL (starts with http)
         if (img && typeof img === 'string' && img.startsWith('http')) {
             productImage = img;
         }
