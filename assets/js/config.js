@@ -12,6 +12,7 @@ const API_CONFIG = {
         REGISTER: '/auth/register/',
         REFRESH_TOKEN: '/auth/token/refresh/',
         PROFILE: '/auth/profile/',
+        PASSWORD_CHANGE: '/auth/password/change/',
         BECOME_SELLER: '/auth/become-seller/',
         
         // Stores

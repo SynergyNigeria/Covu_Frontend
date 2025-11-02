@@ -119,18 +119,10 @@
                         </div>
 
                         <!-- Quick Stats -->
-                        <div class="grid grid-cols-2 gap-6 max-w-lg mx-auto">
+                        <div class="flex justify-center gap-6 max-w-lg mx-auto">
                             <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit">
                                 <div id="walletBalance" class="text-sm font-bold mb-1">₦0</div>
-                                <div class="text-sm text-white/80">Wallet</div>
-                            </div>
-                            <!-- <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit hidden">
-                                <div id="orderCount" class="text-sm font-bold mb-1">0</div>
-                                <div class="text-sm text-white/80">Orders</div>
-                            </div> -->
-                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 w-fit">
-                                <div id="storeRating" class="text-sm font-bold mb-1">0.0</div>
-                                <div class="text-sm text-white/80">Rating</div>
+                                <div class="text-sm text-white/80">Wallet Balance</div>
                             </div>
                         </div>
                     </div>
@@ -203,18 +195,61 @@
             </div>
             
             <form id="locationForm" class="space-y-5">
-                <div>
-                    <label for="address" class="block text-sm font-semibold text-gray-700 mb-3">Address</label>
-                    <input type="text" id="address" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter your complete address">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-2">
+                    <p class="text-xs text-blue-800">
+                        <i data-lucide="info" class="h-3 w-3 inline"></i>
+                        <strong>Important:</strong> You can update your location (state/city) once every 30 days to prevent abuse.
+                    </p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label for="city" class="block text-sm font-semibold text-gray-700 mb-3">City/LGA</label>
-                        <input type="text" id="city" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="City or LGA">
+                        <label for="state" class="block text-sm font-semibold text-gray-700 mb-3">State</label>
+                        <select id="state" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" required>
+                            <option value="">Select State First</option>
+                            <option value="abia">Abia</option>
+                            <option value="adamawa">Adamawa</option>
+                            <option value="akwa_ibom">Akwa Ibom</option>
+                            <option value="anambra">Anambra</option>
+                            <option value="bauchi">Bauchi</option>
+                            <option value="bayelsa">Bayelsa</option>
+                            <option value="benue">Benue</option>
+                            <option value="borno">Borno</option>
+                            <option value="cross_river">Cross River</option>
+                            <option value="delta">Delta</option>
+                            <option value="ebonyi">Ebonyi</option>
+                            <option value="edo">Edo</option>
+                            <option value="ekiti">Ekiti</option>
+                            <option value="enugu">Enugu</option>
+                            <option value="fct">Federal Capital Territory</option>
+                            <option value="gombe">Gombe</option>
+                            <option value="imo">Imo</option>
+                            <option value="jigawa">Jigawa</option>
+                            <option value="kaduna">Kaduna</option>
+                            <option value="kano">Kano</option>
+                            <option value="katsina">Katsina</option>
+                            <option value="kebbi">Kebbi</option>
+                            <option value="kogi">Kogi</option>
+                            <option value="kwara">Kwara</option>
+                            <option value="lagos">Lagos</option>
+                            <option value="nasarawa">Nasarawa</option>
+                            <option value="niger">Niger</option>
+                            <option value="ogun">Ogun</option>
+                            <option value="ondo">Ondo</option>
+                            <option value="osun">Osun</option>
+                            <option value="oyo">Oyo</option>
+                            <option value="plateau">Plateau</option>
+                            <option value="rivers">Rivers</option>
+                            <option value="sokoto">Sokoto</option>
+                            <option value="taraba">Taraba</option>
+                            <option value="yobe">Yobe</option>
+                            <option value="zamfara">Zamfara</option>
+                        </select>
                     </div>
                     <div>
-                        <label for="state" class="block text-sm font-semibold text-gray-700 mb-3">State</label>
-                        <input type="text" id="state" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="State">
+                        <label for="city" class="block text-sm font-semibold text-gray-700 mb-3">LGA (Local Government Area)</label>
+                        <select id="city" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" required disabled>
+                            <option value="">Select State First</option>
+                        </select>
                     </div>
                 </div>
                 <button type="submit" class="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-base transform hover:-translate-y-0.5 active:scale-95">
@@ -234,15 +269,15 @@
             
             <form id="contactForm" class="space-y-5">
                 <div>
-                    <label for="contactEmail" class="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
-                    <input type="email" id="contactEmail" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="your.email@example.com">
-                </div>
-                <div>
                     <label for="contactPhone" class="block text-sm font-semibold text-gray-700 mb-3">Phone Number</label>
-                    <input type="tel" id="contactPhone" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="+234 123 456 7890">
+                    <input type="tel" id="contactPhone" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-orange focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="+234 123 456 7890" required>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i data-lucide="info" class="h-3 w-3 inline"></i>
+                        You can update your phone number once every 30 days
+                    </p>
                 </div>
                 <button type="submit" class="w-full px-6 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-base transform hover:-translate-y-0.5 active:scale-95">
-                    Update Contact Info
+                    Update Phone Number
                 </button>
             </form>
         </div>
@@ -684,6 +719,7 @@
     <!-- Backend API Integration -->
     <script src="/assets/js/config.js"></script>
     <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/nigeria-lgas.js"></script>
     <script>
         // Check authentication before loading page
         if (!api.isAuthenticated()) {

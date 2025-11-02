@@ -73,15 +73,25 @@ function populateProfileData(user) {
     
     updateQuickStats(user);
     
-    const contactEmail = document.getElementById('contactEmail');
+    // Populate contact form (phone only - email cannot be changed)
     const contactPhone = document.getElementById('contactPhone');
-    if (contactEmail) contactEmail.value = user.email || '';
     if (contactPhone) contactPhone.value = user.phone_number || '';
     
-    const cityInput = document.getElementById('city');
+    // Check and disable contact form if within 30-day limit
+    checkContactUpdateEligibility(user);
+    
+    // Populate location form
     const stateInput = document.getElementById('state');
-    if (cityInput) cityInput.value = user.city || '';
-    if (stateInput) stateInput.value = user.state || '';
+    if (stateInput) {
+        stateInput.value = user.state || '';
+        // Populate LGAs for the user's current state
+        if (user.state) {
+            populateLGAsForCurrentState(user.state, user.city);
+        }
+    }
+    
+    // Check and disable location form if within 30-day limit
+    checkLocationUpdateEligibility(user);
     
     // Initialize Lucide icons safely
     if (typeof lucide !== 'undefined') {
@@ -117,6 +127,210 @@ function formatCurrency(amount) {
         currency: 'NGN',
         minimumFractionDigits: 0
     }).format(amount);
+}
+
+function handleStateChange(e) {
+    const selectedState = e.target.value;
+    const citySelect = document.getElementById('city');
+    
+    if (!citySelect) return;
+    
+    // Clear existing options
+    citySelect.innerHTML = '<option value="">Select LGA</option>';
+    
+    if (!selectedState || !NIGERIA_LGAS[selectedState]) {
+        citySelect.disabled = true;
+        return;
+    }
+    
+    // Enable LGA dropdown
+    citySelect.disabled = false;
+    
+    // Populate LGAs for selected state
+    const lgas = NIGERIA_LGAS[selectedState];
+    lgas.forEach(lga => {
+        const option = document.createElement('option');
+        option.value = lga;
+        option.textContent = lga;
+        citySelect.appendChild(option);
+    });
+    
+    console.log(`Loaded ${lgas.length} LGAs for ${STATE_DISPLAY_NAMES[selectedState]}`);
+}
+
+function populateLGAsForCurrentState(state, currentLGA) {
+    const citySelect = document.getElementById('city');
+    
+    if (!citySelect || !state) return;
+    
+    // Clear existing options
+    citySelect.innerHTML = '<option value="">Select LGA</option>';
+    
+    if (NIGERIA_LGAS[state]) {
+        citySelect.disabled = false;
+        const lgas = NIGERIA_LGAS[state];
+        
+        lgas.forEach(lga => {
+            const option = document.createElement('option');
+            option.value = lga;
+            option.textContent = lga;
+            if (lga === currentLGA) {
+                option.selected = true;
+            }
+            citySelect.appendChild(option);
+        });
+        
+        console.log(`Populated ${lgas.length} LGAs for ${STATE_DISPLAY_NAMES[state]}, selected: ${currentLGA}`);
+    } else {
+        citySelect.disabled = true;
+    }
+}
+
+function checkContactUpdateEligibility(user) {
+    const contactPhone = document.getElementById('contactPhone');
+    const contactForm = document.getElementById('contactForm');
+    const submitBtn = contactForm?.querySelector('button[type="submit"]');
+    
+    // Use backend-provided eligibility check
+    const canUpdate = user.can_update_contact !== false; // Default to true if not provided
+    const daysRemaining = user.contact_update_available_in_days || 0;
+    
+    if (!canUpdate && daysRemaining > 0) {
+        // Disable form and show remaining days
+        if (contactPhone) {
+            contactPhone.disabled = true;
+            contactPhone.classList.add('bg-gray-200', 'cursor-not-allowed');
+            contactPhone.classList.remove('bg-gray-50');
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.innerHTML = `Available in ${daysRemaining} day${daysRemaining > 1 ? 's' : ''}`;
+        }
+        
+        // Add info message if not already present
+        const existingInfo = contactForm?.querySelector('.contact-update-info');
+        if (!existingInfo && contactForm) {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'contact-update-info bg-yellow-50 border border-yellow-200 rounded-xl p-3 -mt-2';
+            infoDiv.innerHTML = `
+                <p class="text-xs text-yellow-800">
+                    <i data-lucide="clock" class="h-3 w-3 inline"></i>
+                    You can update your phone number again in <strong>${daysRemaining} day${daysRemaining > 1 ? 's' : ''}</strong>
+                </p>
+            `;
+            contactForm.insertBefore(infoDiv, submitBtn);
+            
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    } else {
+        // Enable form - 30 days have passed
+        enableContactForm();
+    }
+}
+
+function enableContactForm() {
+    const contactPhone = document.getElementById('contactPhone');
+    const contactForm = document.getElementById('contactForm');
+    const submitBtn = contactForm?.querySelector('button[type="submit"]');
+    const infoDiv = contactForm?.querySelector('.contact-update-info');
+    
+    if (contactPhone) {
+        contactPhone.disabled = false;
+        contactPhone.classList.remove('bg-gray-200', 'cursor-not-allowed');
+        contactPhone.classList.add('bg-gray-50');
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.textContent = 'Update Phone Number';
+    }
+    
+    if (infoDiv) {
+        infoDiv.remove();
+    }
+}
+
+function checkLocationUpdateEligibility(user) {
+    const cityInput = document.getElementById('city');
+    const stateInput = document.getElementById('state');
+    const locationForm = document.getElementById('locationForm');
+    const submitBtn = locationForm?.querySelector('button[type="submit"]');
+    
+    // Use backend-provided eligibility check
+    const canUpdate = user.can_update_location !== false; // Default to true if not provided
+    const daysRemaining = user.location_update_available_in_days || 0;
+    
+    if (!canUpdate && daysRemaining > 0) {
+        // Disable form and show remaining days
+        if (cityInput) {
+            cityInput.disabled = true;
+            cityInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+            cityInput.classList.remove('bg-gray-50');
+        }
+        
+        if (stateInput) {
+            stateInput.disabled = true;
+            stateInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+            stateInput.classList.remove('bg-gray-50');
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.innerHTML = `🔒 Available in ${daysRemaining} day${daysRemaining > 1 ? 's' : ''}`;
+        }
+        
+        // Update the info message to show remaining days
+        const infoDiv = locationForm?.querySelector('.bg-blue-50');
+        if (infoDiv) {
+            infoDiv.className = 'bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-2';
+            infoDiv.innerHTML = `
+                <p class="text-xs text-yellow-800">
+                    <i data-lucide="clock" class="h-3 w-3 inline"></i>
+                    You can update your location again in <strong>${daysRemaining} day${daysRemaining > 1 ? 's' : ''}</strong>
+                </p>
+            `;
+            
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    } else {
+        // Enable form - 30 days have passed
+        enableLocationForm();
+    }
+}
+
+function enableLocationForm() {
+    const cityInput = document.getElementById('city');
+    const stateInput = document.getElementById('state');
+    const locationForm = document.getElementById('locationForm');
+    const submitBtn = locationForm?.querySelector('button[type="submit"]');
+    
+    if (cityInput) {
+        cityInput.disabled = false;
+        cityInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+        cityInput.classList.add('bg-gray-50');
+    }
+    
+    if (stateInput) {
+        stateInput.disabled = false;
+        stateInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+        stateInput.classList.add('bg-gray-50');
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.textContent = 'Update Location';
+    }
 }
 
 async function loadUserStores() {
@@ -224,6 +438,10 @@ function setupEventListeners() {
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    
+    // State/LGA dropdown handler
+    const stateSelect = document.getElementById('state');
+    if (stateSelect) stateSelect.addEventListener('change', handleStateChange);
     
     // Help Modal Event Listeners
     const helpBtn = document.getElementById('helpBtn');
@@ -359,6 +577,7 @@ async function handlePasswordUpdate(e) {
     const newPassword = document.getElementById('newPassword');
     const confirmPassword = document.getElementById('confirmPassword');
     
+    // Validation
     if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
         showToast('Please fill in all password fields', 'error');
         return;
@@ -366,18 +585,26 @@ async function handlePasswordUpdate(e) {
     
     if (newPassword.value !== confirmPassword.value) {
         showToast('New passwords do not match', 'error');
+        confirmPassword.focus();
         return;
     }
     
     if (newPassword.value.length < 8) {
         showToast('Password must be at least 8 characters long', 'error');
+        newPassword.focus();
+        return;
+    }
+    
+    if (currentPassword.value === newPassword.value) {
+        showToast('New password must be different from current password', 'error');
+        newPassword.focus();
         return;
     }
     
     try {
         showButtonLoading(e.submitter);
         
-        const response = await api.post('/auth/password/change/', {
+        const response = await api.post(API_CONFIG.ENDPOINTS.PASSWORD_CHANGE, {
             old_password: currentPassword.value,
             new_password: newPassword.value,
             new_password_confirm: confirmPassword.value
@@ -386,18 +613,63 @@ async function handlePasswordUpdate(e) {
         console.log('Password change response:', response);
         
         if (response.success || response.message) {
-            showToast('Password updated successfully! Please login again.', 'success');
+            showToast('✓ Password changed successfully! Logging you out...', 'success');
             e.target.reset();
+            // Logout after 2 seconds to allow user to read the message
             setTimeout(() => handleLogout(), 2000);
         } else {
-            throw new Error(response.message || 'Failed to update password');
+            throw new Error(response.message || 'Failed to change password');
         }
     } catch (error) {
-        console.error('Error updating password:', error);
-        const errorMsg = error.response?.data?.old_password?.[0] || 
-                        error.response?.data?.new_password?.[0] ||
-                        error.message || 
-                        'Failed to update password';
+        console.error('Error changing password:', error);
+        console.log('Full error object:', JSON.stringify(error, null, 2));
+        
+        // Handle specific error types with helpful messages
+        let errorMsg = 'Failed to change password';
+        
+        // Check error.errors (from our API handler) or error.response.data
+        const errorData = error.errors || error.response?.data || error;
+        
+        console.log('Error data:', errorData);
+        
+        // Check for incorrect old password
+        if (errorData.old_password) {
+            if (Array.isArray(errorData.old_password)) {
+                errorMsg = errorData.old_password[0];
+            } else {
+                errorMsg = errorData.old_password;
+            }
+            // Make it more user-friendly
+            if (errorMsg.includes('incorrect') || errorMsg.includes('wrong')) {
+                errorMsg = '🔒 Current password is incorrect. Please try again.';
+            }
+            currentPassword.focus();
+        }
+        // Check for new password validation errors
+        else if (errorData.new_password) {
+            if (Array.isArray(errorData.new_password)) {
+                errorMsg = errorData.new_password[0];
+            } else {
+                errorMsg = errorData.new_password;
+            }
+            newPassword.focus();
+        }
+        // Check for validation errors
+        else if (errorData.detail) {
+            errorMsg = errorData.detail;
+        }
+        // Check error message directly
+        else if (error.message && !error.message.includes('Failed to fetch')) {
+            errorMsg = error.message;
+        }
+        // Generic error with all field errors
+        else if (typeof errorData === 'object') {
+            const errors = Object.values(errorData).flat().filter(e => typeof e === 'string');
+            if (errors.length > 0) {
+                errorMsg = errors[0];
+            }
+        }
+        
         showToast(errorMsg, 'error');
     } finally {
         hideButtonLoading(e.submitter);
@@ -411,7 +683,7 @@ async function handleLocationUpdate(e) {
     const state = document.getElementById('state').value.trim();
     
     if (!city || !state) {
-        showToast('Please fill in all location fields', 'error');
+        showToast('Please fill in all location fields (City and State)', 'error');
         return;
     }
     
@@ -426,7 +698,7 @@ async function handleLocationUpdate(e) {
         console.log('Location update response:', response);
         
         if (response.success || response.message || response.user) {
-            showToast('Location updated successfully!', 'success');
+            showToast('Location updated successfully! ✓', 'success');
             
             if (response.user) {
                 currentUser = response.user;
@@ -437,12 +709,51 @@ async function handleLocationUpdate(e) {
             }
             
             localStorage.setItem(API_CONFIG.TOKEN_KEYS.USER, JSON.stringify(currentUser));
+            
+            // Disable the form immediately after successful update
+            checkLocationUpdateEligibility(currentUser);
         } else {
             throw new Error('Failed to update location');
         }
     } catch (error) {
         console.error('Error updating location:', error);
-        showToast(error.message || 'Failed to update location', 'error');
+        console.log('Full error object:', JSON.stringify(error, null, 2));
+        
+        // Handle specific error types with helpful messages
+        let errorMsg = 'Failed to update location';
+        
+        // Check error.errors (from our API handler) or error.response.data (from other sources)
+        const errorData = error.errors || error.response?.data || error;
+        
+        console.log('Error data:', errorData);
+        
+        // Check for rate limiting (30-day restriction)
+        if (errorData.error && typeof errorData.error === 'string' && errorData.error.includes('30 days')) {
+            errorMsg = errorData.error;
+        }
+        // Check for specific field errors
+        else if (errorData.city || errorData.state) {
+            const cityError = errorData.city ? (Array.isArray(errorData.city) ? errorData.city[0] : errorData.city) : '';
+            const stateError = errorData.state ? (Array.isArray(errorData.state) ? errorData.state[0] : errorData.state) : '';
+            errorMsg = cityError || stateError || errorMsg;
+        }
+        // Check for validation errors
+        else if (errorData.detail) {
+            errorMsg = errorData.detail;
+        }
+        // Check error message directly
+        else if (error.message && !error.message.includes('Failed to fetch')) {
+            errorMsg = error.message;
+        }
+        // Generic error with all field errors
+        else if (typeof errorData === 'object') {
+            const errors = Object.values(errorData).flat().filter(e => typeof e === 'string');
+            if (errors.length > 0) {
+                errorMsg = errors[0];
+            }
+        }
+        
+        showToast(errorMsg, 'error');
     } finally {
         hideButtonLoading(e.submitter);
     }
@@ -468,7 +779,7 @@ async function handleContactUpdate(e) {
         console.log('Contact update response:', response);
         
         if (response.success || response.message || response.user) {
-            showToast('Contact information updated successfully!', 'success');
+            showToast('Phone number updated successfully! ✓', 'success');
             
             if (response.user) {
                 currentUser = response.user;
@@ -479,14 +790,60 @@ async function handleContactUpdate(e) {
             }
             
             localStorage.setItem(API_CONFIG.TOKEN_KEYS.USER, JSON.stringify(currentUser));
+            
+            // Disable the form immediately after successful update
+            checkContactUpdateEligibility(currentUser);
         } else {
-            throw new Error('Failed to update contact information');
+            throw new Error('Failed to update phone number');
         }
     } catch (error) {
         console.error('Error updating contact:', error);
-        const errorMsg = error.response?.data?.phone_number?.[0] || 
-                        error.message || 
-                        'Failed to update contact information';
+        console.log('Full error object:', JSON.stringify(error, null, 2));
+        
+        // Handle specific error types with helpful messages
+        let errorMsg = 'Failed to update phone number';
+        
+        // Check error.errors (from our API handler) or error.response.data (from other sources)
+        const errorData = error.errors || error.response?.data || error;
+        
+        console.log('Error data:', errorData);
+        
+        // Check for rate limiting (30-day restriction)
+        if (errorData.error && typeof errorData.error === 'string' && errorData.error.includes('30 days')) {
+            errorMsg = errorData.error;
+        }
+        // Check for duplicate phone number
+        else if (errorData.phone_number) {
+            if (Array.isArray(errorData.phone_number)) {
+                errorMsg = errorData.phone_number[0];
+            } else {
+                errorMsg = errorData.phone_number;
+            }
+            // Make duplicate error more user-friendly
+            if (errorMsg.includes('already') || errorMsg.includes('exists') || errorMsg.includes('use')) {
+                errorMsg = '⚠️ This phone number is already registered by another user. Please use a different number.';
+            }
+        }
+        // Check for validation errors
+        else if (errorData.detail) {
+            errorMsg = errorData.detail;
+        }
+        // Check error message directly
+        else if (error.message && !error.message.includes('Failed to fetch')) {
+            errorMsg = error.message;
+        }
+        // Generic error with all field errors
+        else if (typeof errorData === 'object') {
+            const errors = Object.values(errorData).flat().filter(e => typeof e === 'string');
+            if (errors.length > 0) {
+                errorMsg = errors[0];
+                // Check if it's a duplicate error
+                if (errorMsg.includes('already') || errorMsg.includes('exists') || errorMsg.includes('use')) {
+                    errorMsg = '⚠️ This phone number is already registered by another user. Please use a different number.';
+                }
+            }
+        }
+        
         showToast(errorMsg, 'error');
     } finally {
         hideButtonLoading(e.submitter);
@@ -707,7 +1064,22 @@ function showToast(message, type = 'success') {
         info: 'bg-blue-500'
     };
     
-    toast.className = `fixed top-4 right-4 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm ${colors[type] || colors.success}`;
+    const icons = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        info: 'info'
+    };
+    
+    // Update icon based on type
+    const iconElement = toast.querySelector('[data-lucide]');
+    if (iconElement) {
+        iconElement.setAttribute('data-lucide', icons[type] || icons.success);
+    }
+    
+    // Make max-width larger for error messages (they tend to be longer)
+    const maxWidth = type === 'error' ? 'max-w-lg' : 'max-w-sm';
+    
+    toast.className = `fixed top-4 right-4 text-white px-5 py-4 rounded-xl shadow-2xl z-50 ${maxWidth} ${colors[type] || colors.success}`;
     toast.classList.remove('hidden');
     
     // Initialize Lucide icons safely
@@ -715,9 +1087,12 @@ function showToast(message, type = 'success') {
         lucide.createIcons();
     }
     
+    // Show longer for error messages
+    const duration = type === 'error' ? 6000 : 4000;
+    
     setTimeout(() => {
         toast.classList.add('hidden');
-    }, 4000);
+    }, duration);
 }
 
 function isValidEmail(email) {
