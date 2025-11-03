@@ -705,8 +705,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const created = new Date(currentStore.created_at);
                 const now = new Date();
                 const diffDays = Math.floor((now - lastEdit) / (1000 * 60 * 60 * 24));
+                
+                // Check if store has been genuinely edited (not just created)
+                // Allow small time difference (< 5 seconds) to account for microsecond differences
+                const timeDiff = Math.abs((lastEdit - created) / 1000); // Convert to seconds
+                const hasBeenEdited = timeDiff > 5; // More than 5 seconds means it was edited
+                
                 // Enforce 60-day lock: After ANY edit, user must wait 60 days before editing again
-                if (currentStore.updated_at !== currentStore.created_at) {
+                if (hasBeenEdited) {
                     // Store has been edited before - check if 60 days have passed
                     if (diffDays < 60) {
                         // LESS than 60 days - LOCKED (must wait)
