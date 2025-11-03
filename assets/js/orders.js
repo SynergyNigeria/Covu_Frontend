@@ -35,9 +35,32 @@ function createOrderCard(order, view) {
     const orderDate = formatDate(order.created_at);
 
     // Extract product details from backend response
-    const productName = order.product?.name || 'Product';
-    const productImage = order.product?.images || 'https://via.placeholder.com/100';
-    const storeName = order.product?.store_name || 'Store';
+    // Handle both snapshot (OrderDetailSerializer) and flat (OrderListSerializer) structures
+    const productName = order.product_snapshot?.name || order.product_name || order.product?.name || 'Product';
+    
+    // Handle product image URL - check multiple possible locations (prioritize snapshots)
+    let productImage = 'https://via.placeholder.com/100';
+    if (order.product_snapshot?.images) {
+        // Snapshot from OrderDetailSerializer
+        productImage = order.product_snapshot.images;
+        console.log('Product image (snapshot) for order', order.order_number, ':', productImage);
+    } else if (order.product_images) {
+        // Flat structure from OrderListSerializer (also uses snapshots now)
+        productImage = order.product_images;
+        console.log('Product image (flat snapshot) for order', order.order_number, ':', productImage);
+    } else if (order.product?.images) {
+        // Fallback to current product data (for old orders without snapshots)
+        if (typeof order.product.images === 'string') {
+            productImage = order.product.images;
+        } else if (order.product.images.url) {
+            productImage = order.product.images.url;
+        }
+        console.log('Product image (current product) for order', order.order_number, ':', productImage);
+    } else {
+        console.warn('No product image found for order', order.order_number, '- Full order data:', order);
+    }
+    
+    const storeName = order.product_snapshot?.store_name || order.product?.store_name || order.seller_name || 'Store';
     const totalAmount = parseFloat(order.total_amount);
     const orderNumber = order.order_number || order.id;
 

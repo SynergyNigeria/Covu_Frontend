@@ -184,6 +184,14 @@ function getActiveCategory() {
     return activeButton ? activeButton.textContent : null;
 }
 
+// Helper function to capitalize text
+function capitalizeText(text) {
+    if (!text) return '';
+    return text.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+}
+
 // Transform backend store data to frontend format
 function transformStoreData(backendStore) {
     // Debug: log the raw backend store object
@@ -195,7 +203,7 @@ function transformStoreData(backendStore) {
         description: backendStore.description || 'Quality products available',
         rating: parseFloat(backendStore.average_rating) || 0,
         total_ratings: backendStore.total_ratings !== undefined ? backendStore.total_ratings : (backendStore.stats ? backendStore.stats.total_ratings : 0),
-        location: `${backendStore.city}, ${backendStore.state}`,
+        location: `${capitalizeText(backendStore.city)}, ${capitalizeText(backendStore.state)}`,
         categories: [], // Categories will be inferred from products later
         products: [], // Products loaded when modal opens
         seller_name: backendStore.seller_name,
@@ -444,13 +452,23 @@ async function openStoreModal(storeId) {
         const storeDetails = await api.get(`${API_CONFIG.ENDPOINTS.STORES}${storeId}/`);
         
         // Populate modal with store data
-        modalStoreTitle.textContent = storeDetails.name;
-        // Ensure logo URL is absolute or use placeholder
-        const storeLogo = storeDetails.logo && storeDetails.logo.startsWith('http') 
-            ? storeDetails.logo 
+        // Note: modalStoreTitle removed from header, store name now only shown below banner
+        
+        // Set seller photo (profile picture)
+        const sellerPhoto = storeDetails.seller_photo && storeDetails.seller_photo.startsWith('http') 
+            ? storeDetails.seller_photo 
             : 'https://res.cloudinary.com/dpmxcjkfl/image/upload/v1762102095/covu-flyer_hotir6.png';
-        modalStoreImage.src = storeLogo;
+        modalStoreImage.src = sellerPhoto;
         modalStoreImage.alt = storeDetails.name;
+        
+        // Set store logo as banner background
+        const modalBanner = document.getElementById('modalStoreBanner');
+        if (modalBanner && storeDetails.logo && storeDetails.logo.startsWith('http')) {
+            modalBanner.style.backgroundImage = `url('${storeDetails.logo}')`;
+            modalBanner.style.backgroundSize = 'cover';
+            modalBanner.style.backgroundPosition = 'center';
+            modalBanner.style.backgroundRepeat = 'no-repeat';
+        }
         modalStoreName.textContent = storeDetails.name;
         modalStoreDescription.textContent = storeDetails.description || 'Quality products available';
         // Show loading state for stars and rating
@@ -472,7 +490,7 @@ async function openStoreModal(storeId) {
             modalStoreRating.textContent = 'Rating unavailable';
             console.warn('[LiveRating][Modal] Failed to fetch stats for store', storeDetails.name, err);
         }
-        modalStoreLocation.textContent = `${storeDetails.city}, ${storeDetails.state}`;
+        modalStoreLocation.textContent = `${capitalizeText(storeDetails.city)}, ${capitalizeText(storeDetails.state)}`;
 
         // Populate products
         modalProductsGrid.innerHTML = '';

@@ -530,12 +530,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Update hero section
         const storeNameEl = document.getElementById('storeName');
         const storeDescriptionEl = document.getElementById('storeDescription');
+        const heroSection = document.querySelector('.relative.bg-gradient-to-br');
         
         if (storeNameEl) {
             storeNameEl.textContent = currentStore.name || 'My Store';
         }
         if (storeDescriptionEl) {
             storeDescriptionEl.textContent = currentStore.description || 'Welcome to my store!';
+        }
+        
+        // Set store logo as hero background image
+        if (heroSection && currentStore.logo) {
+            heroSection.style.backgroundImage = `url('${currentStore.logo}')`;
+            heroSection.style.backgroundSize = 'cover';
+            heroSection.style.backgroundPosition = 'center';
+            heroSection.style.backgroundRepeat = 'no-repeat';
+            // Add a darker overlay to ensure text is readable
+            const overlay = heroSection.querySelector('.absolute.inset-0.opacity-10');
+            if (overlay) {
+                overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                overlay.style.opacity = '1';
+            }
         }
 
         // Update stats

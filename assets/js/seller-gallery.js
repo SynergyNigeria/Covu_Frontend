@@ -723,7 +723,21 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('name', name);
             formData.append('description', description);
             formData.append('price', price);
-            formData.append('category', category);
+            
+            // Map frontend categories to backend categories
+            const categoryMapping = {
+                'Men Clothes': 'mens_clothes',
+                'Ladies Clothes': 'ladies_clothes',
+                'Kids Clothes': 'kids_clothes',
+                'Beauty': 'beauty',
+                'Body Accessories': 'body_accessories',
+                'Clothing Extras': 'clothing_extras',
+                'Bags': 'bags',
+                'Wigs': 'wigs',
+                'Body Scents': 'body_scents'
+            };
+            
+            formData.append('category', categoryMapping[category] || category.toLowerCase().replace(' ', '_'));
 
             // Add image if new one was selected
             if (photoFile) {
@@ -756,11 +770,15 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSellerProducts();
         } catch (error) {
             console.error('Error updating product:', error);
+            console.error('Full error details:', JSON.stringify(error.errors, null, 2));
             
             // Handle specific error messages
             let errorMessage = 'Failed to update product. Please try again.';
             
             if (error.errors) {
+                // Log all error fields for debugging
+                console.log('Error fields:', Object.keys(error.errors));
+                
                 if (error.errors.non_field_errors) {
                     errorMessage = Array.isArray(error.errors.non_field_errors) ? error.errors.non_field_errors[0] : error.errors.non_field_errors;
                 } else if (error.errors.category) {
@@ -773,6 +791,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage = 'Price validation error: ' + (Array.isArray(error.errors.price) ? error.errors.price[0] : error.errors.price);
                 } else if (error.errors.detail) {
                     errorMessage = error.errors.detail;
+                } else {
+                    // Show the first error found
+                    const firstErrorKey = Object.keys(error.errors)[0];
+                    const firstError = error.errors[firstErrorKey];
+                    errorMessage = `${firstErrorKey}: ${Array.isArray(firstError) ? firstError[0] : firstError}`;
                 }
             } else if (error.message) {
                 errorMessage = error.message;
