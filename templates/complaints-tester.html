@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints API Tester</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Complaints System API Tester</h1>
+        
+        <div class="section">
+            <h3>📊 Test Endpoints</h3>
+            <button onclick="testCategories()">Get Categories</button>
+            <button onclick="testStats()">Get Statistics</button>
+            <button onclick="testListComplaints()">List My Complaints</button>
+            <div id="testResult" class="result">Results will appear here...</div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Create Test Complaint</h3>
+            <form id="complaintForm">
+                <label>Type:</label>
+                <select id="type" required>
+                    <option value="SELLER">Report Seller</option>
+                    <option value="BUYER">Report Buyer</option>
+                    <option value="ORDER">Report Order</option>
+                    <option value="TRANSACTION">Report Transaction</option>
+                </select>
+
+                <label>Category:</label>
+                <select id="category" required>
+                    <option value="FRAUD">Fraud</option>
+                    <option value="POOR_SERVICE">Poor Service</option>
+                    <option value="SCAM">Scam</option>
+                </select>
+
+                <label>Urgency:</label>
+                <select id="urgency" required>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Critical</option>
+                </select>
+
+                <label>Description:</label>
+                <textarea id="description" rows="4" required>This is a test complaint submitted via API tester.</textarea>
+
+                <label>Reported User (for SELLER/BUYER only):</label>
+                <input type="text" id="reportedUser" placeholder="Username or email">
+
+                <label>Order ID (for ORDER only):</label>
+                <input type="text" id="orderId" placeholder="ORD-123">
+
+                <label>Transaction ID (for TRANSACTION only):</label>
+                <input type="text" id="transactionId" placeholder="TXN-123">
+
+                <label>Transaction Type (for TRANSACTION only):</label>
+                <select id="transactionType">
+                    <option value="">Select type...</option>
+                    <option value="PAYMENT">Payment</option>
+                    <option value="REFUND">Refund</option>
+                    <option value="WITHDRAWAL">Withdrawal</option>
+                </select>
+
+                <button type="submit">Submit Test Complaint</button>
+            </form>
+            <div id="createResult" class="result">Submission result will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        
+        // Get token from localStorage (you need to login first)
+        function getAuthHeaders() {
+            const token = localStorage.getItem('access_token');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Test Categories Endpoint
+        async function testCategories() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '⏳ Loading categories...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/categories/`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Categories Retrieved:\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error:\n${error.message}`;
+            }
+        }
+
+        // Test Stats Endpoint
+        async function testStats() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '⏳ Loading statistics...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/stats/`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Statistics Retrieved:\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error:\n${error.message}`;
+            }
+        }
+
+        // Test List Complaints
+        async function testListComplaints() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '⏳ Loading complaints...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Complaints Retrieved (${data.length} total):\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error:\n${error.message}`;
+            }
+        }
+
+        // Handle Form Submission
+        document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.innerHTML = '⏳ Submitting complaint...';
+            
+            const type = document.getElementById('type').value;
+            const payload = {
+                complaint_type: type,
+                category: document.getElementById('category').value,
+                urgency: document.getElementById('urgency').value,
+                description: document.getElementById('description').value
+            };
+            
+            // Add conditional fields based on type
+            if (type === 'SELLER' || type === 'BUYER') {
+                const reportedUser = document.getElementById('reportedUser').value;
+                if (!reportedUser) {
+                    alert('Reported User is required for SELLER/BUYER complaints');
+                    return;
+                }
+                payload.reported_user_name = reportedUser;
+            } else if (type === 'ORDER') {
+                const orderId = document.getElementById('orderId').value;
+                if (!orderId) {
+                    alert('Order ID is required for ORDER complaints');
+                    return;
+                }
+                payload.order_id = orderId;
+            } else if (type === 'TRANSACTION') {
+                const txnId = document.getElementById('transactionId').value;
+                const txnType = document.getElementById('transactionType').value;
+                if (!txnId || !txnType) {
+                    alert('Transaction ID and Type are required for TRANSACTION complaints');
+                    return;
+                }
+                payload.transaction_id = txnId;
+                payload.transaction_type = txnType;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/complaints/`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Complaint Created Successfully!\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error Response:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error:\n${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

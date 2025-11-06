@@ -443,13 +443,6 @@ function setupEventListeners() {
     const stateSelect = document.getElementById('state');
     if (stateSelect) stateSelect.addEventListener('change', handleStateChange);
     
-    // Help Modal Event Listeners
-    const helpBtn = document.getElementById('helpBtn');
-    if (helpBtn) helpBtn.addEventListener('click', showHelpModal);
-    
-    const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
-    if (closeHelpModalBtn) closeHelpModalBtn.addEventListener('click', hideHelpModal);
-    
     // Become Seller Modal Event Listeners
     const cancelBecomeSellerBtn = document.getElementById('cancelBecomeSellerBtn');
     if (cancelBecomeSellerBtn) cancelBecomeSellerBtn.addEventListener('click', hideBecomeSellerModal);
@@ -498,76 +491,7 @@ function setupEventListeners() {
         });
     }
     
-    // Help Modal click outside to close
-    const helpModal = document.getElementById('helpModal');
-    if (helpModal) {
-        helpModal.addEventListener('click', (e) => {
-            if (e.target === helpModal) {
-                hideHelpModal();
-            }
-        });
-    }
-    
-    // Report Modal Event Listeners
-    const reportSellerForm = document.getElementById('reportSellerForm');
-    if (reportSellerForm) reportSellerForm.addEventListener('submit', handleReportSellerSubmit);
-    
-    const closeReportSellerModalBtn = document.getElementById('closeReportSellerModalBtn');
-    if (closeReportSellerModalBtn) closeReportSellerModalBtn.addEventListener('click', hideReportSellerModal);
-    
-    const reportSellerModal = document.getElementById('reportSellerModal');
-    if (reportSellerModal) {
-        reportSellerModal.addEventListener('click', (e) => {
-            if (e.target === reportSellerModal) {
-                hideReportSellerModal();
-            }
-        });
-    }
-    
-    const reportBuyerForm = document.getElementById('reportBuyerForm');
-    if (reportBuyerForm) reportBuyerForm.addEventListener('submit', handleReportBuyerSubmit);
-    
-    const closeReportBuyerModalBtn = document.getElementById('closeReportBuyerModalBtn');
-    if (closeReportBuyerModalBtn) closeReportBuyerModalBtn.addEventListener('click', hideReportBuyerModal);
-    
-    const reportBuyerModal = document.getElementById('reportBuyerModal');
-    if (reportBuyerModal) {
-        reportBuyerModal.addEventListener('click', (e) => {
-            if (e.target === reportBuyerModal) {
-                hideReportBuyerModal();
-            }
-        });
-    }
-    
-    const reportProductForm = document.getElementById('reportProductForm');
-    if (reportProductForm) reportProductForm.addEventListener('submit', handleReportProductSubmit);
-    
-    const closeReportProductModalBtn = document.getElementById('closeReportProductModalBtn');
-    if (closeReportProductModalBtn) closeReportProductModalBtn.addEventListener('click', hideReportProductModal);
-    
-    const reportProductModal = document.getElementById('reportProductModal');
-    if (reportProductModal) {
-        reportProductModal.addEventListener('click', (e) => {
-            if (e.target === reportProductModal) {
-                hideReportProductModal();
-            }
-        });
-    }
-    
-    const reportTransactionForm = document.getElementById('reportTransactionForm');
-    if (reportTransactionForm) reportTransactionForm.addEventListener('submit', handleReportTransactionSubmit);
-    
-    const closeReportTransactionModalBtn = document.getElementById('closeReportTransactionModalBtn');
-    if (closeReportTransactionModalBtn) closeReportTransactionModalBtn.addEventListener('click', hideReportTransactionModal);
-    
-    const reportTransactionModal = document.getElementById('reportTransactionModal');
-    if (reportTransactionModal) {
-        reportTransactionModal.addEventListener('click', (e) => {
-            if (e.target === reportTransactionModal) {
-                hideReportTransactionModal();
-            }
-        });
-    }
+
 }
 
 async function handlePasswordUpdate(e) {
@@ -901,83 +825,7 @@ function hideSellerSuccessModal() {
     document.body.style.overflow = 'auto'; // Restore scrolling
 }
 
-function showHelpModal() {
-    const modal = document.getElementById('helpModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-
-    // Re-initialize icons for the modal
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function hideHelpModal() {
-    const modal = document.getElementById('helpModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto'; // Restore scrolling
-}
-
-// Report Modal Functions
-function showReportSellerModal() {
-    const modal = document.getElementById('reportSellerModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function hideReportSellerModal() {
-    const modal = document.getElementById('reportSellerModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
-
-function showReportBuyerModal() {
-    const modal = document.getElementById('reportBuyerModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function hideReportBuyerModal() {
-    const modal = document.getElementById('reportBuyerModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
-
-function showReportProductModal() {
-    const modal = document.getElementById('reportProductModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function hideReportProductModal() {
-    const modal = document.getElementById('reportProductModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
-
-function showReportTransactionModal() {
-    const modal = document.getElementById('reportTransactionModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function hideReportTransactionModal() {
-    const modal = document.getElementById('reportTransactionModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
+// Help and Report Modal Functions are now in complaints.js
 
 async function confirmBecomeSellerAction() {
     try {
@@ -1100,77 +948,4 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// Report Submit Handlers
-async function handleReportSellerSubmit(e) {
-    e.preventDefault();
-    
-    const sellerName = document.getElementById('sellerName').value.trim();
-    const issue = document.getElementById('sellerIssue').value.trim();
-    
-    if (!sellerName || !issue) {
-        showToast('Please fill in all fields', 'error');
-        return;
-    }
-    
-    // Here, in a real app, you would send the report to the backend
-    // For now, just show success message
-    showToast('Your report has been received and will be looked at. You will get an email notification via result or phone call from our service help staff.', 'success');
-    
-    hideReportSellerModal();
-    e.target.reset();
-}
-
-async function handleReportBuyerSubmit(e) {
-    e.preventDefault();
-    
-    const buyerName = document.getElementById('buyerName').value.trim();
-    const issue = document.getElementById('buyerIssue').value.trim();
-    
-    if (!buyerName || !issue) {
-        showToast('Please fill in all fields', 'error');
-        return;
-    }
-    
-    // Here, in a real app, you would send the report to the backend
-    showToast('Your report has been received and will be looked at. You will get an email notification via result or phone call from our service help staff.', 'success');
-    
-    hideReportBuyerModal();
-    e.target.reset();
-}
-
-async function handleReportProductSubmit(e) {
-    e.preventDefault();
-    
-    const orderNumber = document.getElementById('orderNumber').value.trim();
-    const issue = document.getElementById('orderIssue').value.trim();
-    
-    if (!orderNumber || !issue) {
-        showToast('Please fill in all fields', 'error');
-        return;
-    }
-    
-    // Here, in a real app, you would send the report to the backend
-    showToast('Your report has been received and will be looked at. You will get an email notification via result or phone call from our service help staff.', 'success');
-    
-    hideReportProductModal();
-    e.target.reset();
-}
-
-async function handleReportTransactionSubmit(e) {
-    e.preventDefault();
-    
-    const transactionType = document.getElementById('transactionType').value;
-    const transactionId = document.getElementById('transactionId').value.trim();
-    const issue = document.getElementById('transactionIssue').value.trim();
-    
-    if (!transactionType || !transactionId || !issue) {
-        showToast('Please fill in all fields', 'error');
-        return;
-    }
-    
-    // Here, in a real app, you would send the report to the backend
-    showToast('Your report has been received and will be looked at. You will get an email notification via result or phone call from our service help staff.', 'success');
-    
-    hideReportTransactionModal();
-    e.target.reset();
-}
+// All report/complaint handling is now in complaints.js with smart features

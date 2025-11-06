@@ -318,165 +318,7 @@
         </div>
     </div>
 
-    <!-- Report Seller Modal -->
-    <div id="reportSellerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
-            <!-- Modal Header -->
-            <div class="bg-red-500 rounded-t-3xl p-6 text-white text-center">
-                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="user-x" class="h-8 w-8 text-white"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Report Seller</h3>
-                <p class="text-white/90 text-sm">Report inappropriate seller behavior</p>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="reportSellerForm" class="space-y-4">
-                    <div>
-                        <label for="sellerName" class="block text-sm font-semibold text-gray-700 mb-2">Seller Name / Store Name</label>
-                        <input type="text" id="sellerName" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter seller or store name" required>
-                    </div>
-                    <div>
-                        <label for="sellerIssue" class="block text-sm font-semibold text-gray-700 mb-2">Describe the Issue</label>
-                        <textarea id="sellerIssue" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base resize-none" placeholder="Please explain the issue in detail..." required></textarea>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="flex gap-3 p-6 pt-0">
-                <button id="closeReportSellerModalBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
-                    Cancel
-                </button>
-                <button id="submitReportSellerBtn" type="submit" form="reportSellerForm" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 font-medium shadow-lg">
-                    Submit Report
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Report Buyer Modal -->
-    <div id="reportBuyerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
-            <!-- Modal Header -->
-            <div class="bg-blue-500 rounded-t-3xl p-6 text-white text-center">
-                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="user-x" class="h-8 w-8 text-white"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Report Buyer</h3>
-                <p class="text-white/90 text-sm">Report inappropriate buyer behavior</p>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="reportBuyerForm" class="space-y-4">
-                    <div>
-                        <label for="buyerName" class="block text-sm font-semibold text-gray-700 mb-2">Buyer Name</label>
-                        <input type="text" id="buyerName" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter buyer name" required>
-                    </div>
-                    <div>
-                        <label for="buyerIssue" class="block text-sm font-semibold text-gray-700 mb-2">Describe the Issue</label>
-                        <textarea id="buyerIssue" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base resize-none" placeholder="Please explain the issue in detail..." required></textarea>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="flex gap-3 p-6 pt-0">
-                <button id="closeReportBuyerModalBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
-                    Cancel
-                </button>
-                <button id="submitReportBuyerBtn" type="submit" form="reportBuyerForm" class="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-200 font-medium shadow-lg">
-                    Submit Report
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Report Product Modal -->
-    <div id="reportProductModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
-            <!-- Modal Header -->
-            <div class="bg-yellow-500 rounded-t-3xl p-6 text-white text-center">
-                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="clipboard-list" class="h-8 w-8 text-white"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Report Order</h3>
-                <p class="text-white/90 text-sm">Report problems with orders</p>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="reportProductForm" class="space-y-4">
-                    <div>
-                        <label for="orderNumber" class="block text-sm font-semibold text-gray-700 mb-2">Order Number</label>
-                        <input type="text" id="orderNumber" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter order number" required>
-                    </div>
-                    <div>
-                        <label for="orderIssue" class="block text-sm font-semibold text-gray-700 mb-2">Issue with Order</label>
-                        <textarea id="orderIssue" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base resize-none" placeholder="Please explain the issue with the order..." required></textarea>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="flex gap-3 p-6 pt-0">
-                <button id="closeReportProductModalBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
-                    Cancel
-                </button>
-                <button id="submitReportProductBtn" type="submit" form="reportProductForm" class="flex-1 px-4 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition-all duration-200 font-medium shadow-lg">
-                    Submit Report
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Report Transaction Modal -->
-    <div id="reportTransactionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300">
-            <!-- Modal Header -->
-            <div class="bg-purple-500 rounded-t-3xl p-6 text-white text-center">
-                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="credit-card" class="h-8 w-8 text-white"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Report Transaction</h3>
-                <p class="text-white/90 text-sm">Report payment or transaction issues</p>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="reportTransactionForm" class="space-y-4">
-                    <div>
-                        <label for="transactionType" class="block text-sm font-semibold text-gray-700 mb-2">Transaction Type</label>
-                        <select id="transactionType" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base" required>
-                            <option value="">Select transaction type</option>
-                            <option value="deposit">Deposit</option>
-                            <option value="withdrawal">Withdrawal</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="transactionId" class="block text-sm font-semibold text-gray-700 mb-2">Transaction ID</label>
-                        <input type="text" id="transactionId" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base" placeholder="Enter transaction ID" required>
-                    </div>
-                    <div>
-                        <label for="transactionIssue" class="block text-sm font-semibold text-gray-700 mb-2">Issue with Transaction</label>
-                        <textarea id="transactionIssue" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 transition-all duration-200 text-base resize-none" placeholder="Please explain the issue with the transaction..." required></textarea>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="flex gap-3 p-6 pt-0">
-                <button id="closeReportTransactionModalBtn" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
-                    Cancel
-                </button>
-                <button id="submitReportTransactionBtn" type="submit" form="reportTransactionForm" class="flex-1 px-4 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all duration-200 font-medium shadow-lg">
-                    Submit Report
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Seller Success Modal -->
     <div id="sellerSuccessModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 transform transition-all duration-300">
             <!-- Modal Header -->
@@ -685,6 +527,301 @@
         </div>
     </div>
 
+    <!-- Report Seller Modal -->
+    <div id="reportSellerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 my-8 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-red-600 rounded-t-3xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i data-lucide="user-x" class="h-6 w-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Report Seller</h3>
+                            <p class="text-sm text-white/90">Report inappropriate seller behavior</p>
+                        </div>
+                    </div>
+                    <button onclick="hideReportSellerModal()" class="text-white/80 hover:text-white transition-colors">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="reportSellerForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Seller Name/Username <span class="text-red-500">*</span></label>
+                    <input type="text" id="reportedSellerName" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Enter seller's name or username" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+                    <select id="sellerCategory" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+                        <option value="">Select a category...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level <span class="text-red-500">*</span></label>
+                    <select id="sellerUrgency" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+                        <option value="">Select urgency...</option>
+                        <option value="LOW">Low - Not urgent</option>
+                        <option value="MEDIUM">Medium - Moderately urgent</option>
+                        <option value="HIGH">High - Urgent</option>
+                        <option value="URGENT">Critical - Requires immediate attention</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                    <textarea id="sellerDescription" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" placeholder="Describe the issue in detail..." required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Please provide as much detail as possible</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Attachment (Optional)</label>
+                    <input type="file" id="sellerAttachment" accept=".jpg,.jpeg,.png,.pdf" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-600 hover:file:bg-red-100">
+                    <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="hideReportSellerModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium shadow-lg">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Buyer Modal -->
+    <div id="reportBuyerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 my-8 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-blue-600 rounded-t-3xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i data-lucide="user-x" class="h-6 w-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Report Buyer</h3>
+                            <p class="text-sm text-white/90">Report inappropriate buyer behavior</p>
+                        </div>
+                    </div>
+                    <button onclick="hideReportBuyerModal()" class="text-white/80 hover:text-white transition-colors">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="reportBuyerForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Buyer Name/Username <span class="text-red-500">*</span></label>
+                    <input type="text" id="reportedBuyerName" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter buyer's name or username" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+                    <select id="buyerCategory" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="">Select a category...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level <span class="text-red-500">*</span></label>
+                    <select id="buyerUrgency" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="">Select urgency...</option>
+                        <option value="LOW">Low - Not urgent</option>
+                        <option value="MEDIUM">Medium - Moderately urgent</option>
+                        <option value="HIGH">High - Urgent</option>
+                        <option value="URGENT">Critical - Requires immediate attention</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                    <textarea id="buyerDescription" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" placeholder="Describe the issue in detail..." required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Please provide as much detail as possible</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Attachment (Optional)</label>
+                    <input type="file" id="buyerAttachment" accept=".jpg,.jpeg,.png,.pdf" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100">
+                    <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="hideReportBuyerModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-lg">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Order Modal -->
+    <div id="reportOrderModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 my-8 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-yellow-600 rounded-t-3xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i data-lucide="clipboard-list" class="h-6 w-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Report Order</h3>
+                            <p class="text-sm text-white/90">Report problems with an order</p>
+                        </div>
+                    </div>
+                    <button onclick="hideReportProductModal()" class="text-white/80 hover:text-white transition-colors">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="reportOrderForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select Order <span class="text-red-500">*</span></label>
+                    <select id="orderIdInput" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent" required>
+                        <option value="">Select an order...</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Choose the order you want to report</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+                    <select id="orderCategory" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent" required>
+                        <option value="">Select a category...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level <span class="text-red-500">*</span></label>
+                    <select id="orderUrgency" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent" required>
+                        <option value="">Select urgency...</option>
+                        <option value="LOW">Low - Not urgent</option>
+                        <option value="MEDIUM">Medium - Moderately urgent</option>
+                        <option value="HIGH">High - Urgent</option>
+                        <option value="URGENT">Critical - Requires immediate attention</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                    <textarea id="orderDescription" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none" placeholder="Describe the issue in detail..." required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Please provide as much detail as possible</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Attachment (Optional)</label>
+                    <input type="file" id="orderAttachment" accept=".jpg,.jpeg,.png,.pdf" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-600 hover:file:bg-yellow-100">
+                    <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="hideReportProductModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-all duration-200 font-medium shadow-lg">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Transaction Modal -->
+    <div id="reportTransactionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 my-8 transform transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="bg-purple-600 rounded-t-3xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i data-lucide="credit-card" class="h-6 w-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Report Transaction</h3>
+                            <p class="text-sm text-white/90">Report payment or transaction issues</p>
+                        </div>
+                    </div>
+                    <button onclick="hideReportTransactionModal()" class="text-white/80 hover:text-white transition-colors">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="reportTransactionForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Transaction ID <span class="text-red-500">*</span></label>
+                    <input type="text" id="transactionIdInput" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Enter transaction reference" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Transaction Type <span class="text-red-500">*</span></label>
+                    <select id="transactionTypeInput" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        <option value="">Select transaction type...</option>
+                        <option value="PAYMENT">Payment</option>
+                        <option value="REFUND">Refund</option>
+                        <option value="WITHDRAWAL">Withdrawal</option>
+                        <option value="DEPOSIT">Deposit</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+                    <select id="transactionCategory" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        <option value="">Select a category...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level <span class="text-red-500">*</span></label>
+                    <select id="transactionUrgency" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        <option value="">Select urgency...</option>
+                        <option value="LOW">Low - Not urgent</option>
+                        <option value="MEDIUM">Medium - Moderately urgent</option>
+                        <option value="HIGH">High - Urgent</option>
+                        <option value="URGENT">Critical - Requires immediate attention</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                    <textarea id="transactionDescription" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" placeholder="Describe the issue in detail..." required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Please provide as much detail as possible</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Attachment (Optional)</label>
+                    <input type="file" id="transactionAttachment" accept=".jpg,.jpeg,.png,.pdf" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-600 hover:file:bg-purple-100">
+                    <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="hideReportTransactionModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 font-medium shadow-lg">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl z-40">
         <div class="flex justify-around items-center py-3 px-4 max-w-4xl mx-auto">
@@ -726,6 +863,7 @@
             window.location.href = 'login.html';
         }
     </script>
+    <script src="/assets/js/complaints.js"></script>
     <script src="/assets/js/profile.js"></script>
 </body>
 </html>
