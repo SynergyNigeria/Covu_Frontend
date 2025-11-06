@@ -84,11 +84,14 @@ class APIHandler {
 
             const data = await response.json();
             this.setTokens(data.access, null); // Only update access token
+            console.log('✅ Token refreshed successfully');
             return data.access;
         } catch (error) {
-            // If refresh fails, clear tokens and redirect to login
-            this.clearTokens();
-            window.location.href = '/templates/login.html';
+            console.error('❌ Token refresh failed:', error);
+            
+            // Don't immediately logout - give user a chance to see payment status
+            // Only clear tokens and redirect after user interaction
+            // This prevents auto-logout during payment verification
             throw error;
         }
     }
@@ -128,9 +131,25 @@ class APIHandler {
 
             // Handle 401 (Unauthorized) - Try to refresh token
             if (response.status === 401 && requiresAuth && retryOnAuthFailure) {
-                await this.refreshAccessToken();
-                // Retry the request with new token
-                return this.request(endpoint, { ...options, retryOnAuthFailure: false });
+                try {
+                    await this.refreshAccessToken();
+                    // Retry the request with new token
+                    return this.request(endpoint, { ...options, retryOnAuthFailure: false });
+                } catch (refreshError) {
+                    console.error('Token refresh failed, clearing tokens');
+                    // Only logout and redirect for non-payment pages
+                    // Check if user is on payment-related page
+                    const currentPath = window.location.pathname;
+                    const isPaymentPage = currentPath.includes('purchase') || 
+                                         window.location.search.includes('payment=success');
+                    
+                    if (!isPaymentPage) {
+                        // Clear tokens and redirect to login
+                        this.clearTokens();
+                        window.location.href = '/templates/login.html';
+                    }
+                    throw refreshError;
+                }
             }
 
             // Parse response

@@ -16,50 +16,59 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     if (paymentStatus === 'success' && reference) {
         // Show success message
-        showToast('Payment successful! Updating wallet...', 'success');
+        showToast('Payment successful! Verifying...', 'success');
         
-        // Wait a moment for any background processing
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Try to verify payment with backend
-        try {
-            const verifyResponse = await api.get(`/wallet/verify/${reference}/`);
-            console.log('Payment verified:', verifyResponse);
-            
-            if (verifyResponse.status === 'success') {
-                showToast(`Wallet credited: ${formatCurrency(verifyResponse.amount)}`, 'success');
-            }
-        } catch (error) {
-            console.error('Verification error:', error);
-            // Verification failed, but payment might still be processed
-            // Just refresh the wallet balance to check
-            showToast('Verifying payment status...', 'info');
-        }
-        
-        // Clean URL (remove query parameters)
+        // Clean URL immediately to prevent re-processing on refresh
         window.history.replaceState({}, document.title, window.location.pathname);
         
-        // Always refresh wallet balance regardless of verification result
+        // Wait briefly (webhook won't work on localhost anyway)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // PRIMARY: Call verification endpoint to credit wallet (webhook doesn't work on localhost)
         try {
-            const updatedUser = await api.get(API_CONFIG.ENDPOINTS.PROFILE);
-            localStorage.setItem(API_CONFIG.TOKEN_KEYS.USER, JSON.stringify(updatedUser));
+            const verifyResponse = await api.get(`/wallet/verify/${reference}/`);
+            console.log('✅ Payment verified:', verifyResponse);
             
-            // Update display
-            const walletElement = document.getElementById('walletBalance');
-            if (walletElement) {
-                walletElement.textContent = formatCurrency(updatedUser.wallet_balance);
+            if (verifyResponse.status === 'success') {
+                // Verification credited wallet or confirmed already credited
+                const amount = verifyResponse.amount || verifyResponse.data?.amount;
+                showToast(`Wallet credited: ${formatCurrency(amount)}`, 'success');
+                
+                // Refresh user profile to get updated balance
+                try {
+                    const updatedUser = await api.get(API_CONFIG.ENDPOINTS.PROFILE);
+                    localStorage.setItem(API_CONFIG.TOKEN_KEYS.USER, JSON.stringify(updatedUser));
+                    
+                    // Update wallet display
+                    const walletElement = document.getElementById('walletBalance');
+                    if (walletElement) {
+                        walletElement.textContent = formatCurrency(updatedUser.wallet_balance);
+                    }
+                    
+                    console.log('✅ Wallet balance updated:', updatedUser.wallet_balance);
+                    
+                    // Show final success
+                    setTimeout(() => {
+                        showToast('Balance updated successfully!', 'success');
+                    }, 500);
+                    
+                } catch (balanceError) {
+                    console.error('Error refreshing balance display:', balanceError);
+                    // Wallet was credited, just display refresh failed
+                    showToast('Payment successful! Refresh page to see updated balance.', 'info');
+                }
+            } else {
+                throw new Error(verifyResponse.message || 'Verification failed');
             }
-            
-            console.log('Wallet balance refreshed:', updatedUser.wallet_balance);
-            
-            // Show final success message
-            setTimeout(() => {
-                showToast('Wallet balance updated!', 'success');
-            }, 500);
-            
         } catch (error) {
-            console.error('Error refreshing wallet balance:', error);
-            showToast('Please refresh the page to see updated balance', 'warning');
+            console.error('❌ Verification error:', error);
+            
+            // Check if it's an authentication error
+            if (error.status === 401) {
+                showToast('Session expired. Please login to see your balance.', 'warning');
+            } else {
+                showToast('Payment processed! Please refresh page or login to see balance.', 'info');
+            }
         }
     }
 
