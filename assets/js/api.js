@@ -213,6 +213,57 @@ class APIHandler {
         }
         return true;
     }
+
+    // Validate session by making a test API call
+    async validateSession() {
+        try {
+            // Try to fetch user profile - this will auto-refresh token if expired
+            const user = await this.get(API_CONFIG.ENDPOINTS.PROFILE);
+            
+            if (user && (user.id || user.email)) {
+                // Session is valid, update stored user data
+                this.setCurrentUser(user);
+                return { valid: true, user };
+            }
+            
+            return { valid: false, reason: 'Invalid response' };
+        } catch (error) {
+            console.error('Session validation failed:', error);
+            
+            // Check if it's a token error
+            if (error.status === 401) {
+                return { valid: false, reason: 'Token expired', requiresLogin: true };
+            }
+            
+            return { valid: false, reason: 'Network error', error };
+        }
+    }
+
+    // Check if session is valid before critical operations (like payment)
+    async ensureValidSession(showAlert = true) {
+        const result = await this.validateSession();
+        
+        if (!result.valid) {
+            if (showAlert) {
+                if (result.requiresLogin) {
+                    alert('Your session has expired. Please login again to continue.');
+                } else {
+                    alert('Unable to verify your session. Please check your connection and try again.');
+                }
+            }
+            
+            if (result.requiresLogin) {
+                // Clear tokens and redirect to login
+                this.clearTokens();
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            return false;
+        }
+        
+        return true;
+    }
 }
 
 // Create global API instance

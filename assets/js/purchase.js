@@ -8,6 +8,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Initialize Lucide icons
     lucide.createIcons();
+    
+    // Validate session on page load
+    console.log('Validating session on page load...');
+    const sessionValid = await api.ensureValidSession(false);
+    
+    if (!sessionValid) {
+        // Session invalid - user will be redirected to login
+        console.log('Session invalid on page load - redirecting to login');
+        return;
+    }
+    
+    console.log('✅ Session valid on page load');
 
     // Check if returning from Paystack payment
     const urlParams = new URLSearchParams(window.location.search);
@@ -191,7 +203,7 @@ async function loadWalletBalance() {
 function setupEventListeners(currentBalance) {
     const proceedBtn = document.getElementById('proceedToPaymentBtn');
     const paymentAmountInput = document.getElementById('paymentAmount');
-    const deliveryAddressInput = document.getElementById('deliveryAddress');
+    const deliveryMessageInput = document.getElementById('deliveryMessage');
     const topUpBtn = document.getElementById('topUpBtn');
 
     // Get product data for order creation
@@ -200,19 +212,19 @@ function setupEventListeners(currentBalance) {
     // Proceed to payment button (show confirmation modal)
     proceedBtn.addEventListener('click', function() {
         const paymentAmount = parseFloat(paymentAmountInput.value) || 0;
-        const deliveryAddress = deliveryAddressInput.value.trim();
+        const deliveryMessage = deliveryMessageInput.value.trim();
         const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₦', '').replace(',', '')) || 0;
 
         // Validation
-        if (!deliveryAddress) {
-            alert('Please enter your delivery address.');
-            deliveryAddressInput.focus();
+        if (!deliveryMessage) {
+            alert('Please enter your delivery message with address and instructions.');
+            deliveryMessageInput.focus();
             return;
         }
 
-        if (deliveryAddress.length < 10) {
-            alert('Please provide a detailed delivery address (at least 10 characters).');
-            deliveryAddressInput.focus();
+        if (deliveryMessage.length < 10) {
+            alert('Please provide detailed delivery instructions (at least 10 characters).');
+            deliveryMessageInput.focus();
             return;
         }
 
@@ -227,7 +239,7 @@ function setupEventListeners(currentBalance) {
         }
 
         // Show purchase confirmation modal
-        showPurchaseModal(paymentAmount, productData, deliveryAddress);
+        showPurchaseModal(paymentAmount, productData, deliveryMessage);
     });
 
     // Top Up button (show modal)
@@ -309,8 +321,21 @@ function hideTopUpModal() {
 
 async function processTopUp(amount) {
     try {
+        // CRITICAL: Validate session before initiating payment
+        showToast('Validating session...', 'info');
+        
+        const sessionValid = await api.ensureValidSession(true);
+        
+        if (!sessionValid) {
+            // ensureValidSession already showed alert and redirected if needed
+            console.log('Session validation failed - aborting payment');
+            return;
+        }
+        
+        console.log('✅ Session validated - proceeding with payment');
+        
         // Show loading toast
-        showToast('Initializing payment with Paystack...');
+        showToast('Initializing payment with Paystack...', 'info');
 
         // Call backend to initialize Paystack payment
         const response = await api.post(API_CONFIG.ENDPOINTS.WALLET_FUND, {
@@ -390,7 +415,7 @@ style.textContent = `
 document.head.appendChild(style);
 
 // Purchase modal functions
-function showPurchaseModal(paymentAmount, productData, deliveryAddress) {
+function showPurchaseModal(paymentAmount, productData, deliveryMessage) {
     const modal = document.getElementById('purchaseModal');
     const loadingState = document.getElementById('purchaseLoadingState');
     const successState = document.getElementById('purchaseSuccessState');
@@ -408,21 +433,21 @@ function showPurchaseModal(paymentAmount, productData, deliveryAddress) {
     // Simulate processing delay
     setTimeout(() => {
         // Process the payment
-        processPurchase(paymentAmount, productData, deliveryAddress, loadingState, successState, orderIdElement);
+        processPurchase(paymentAmount, productData, deliveryMessage, loadingState, successState, orderIdElement);
     }, 1500); // 1.5 second delay to show processing
 }
 
-async function processPurchase(paymentAmount, productData, deliveryAddress, loadingState, successState, orderIdElement) {
+async function processPurchase(paymentAmount, productData, deliveryMessage, loadingState, successState, orderIdElement) {
     try {
         console.log('Creating order...', {
             product_id: productData.id,
-            delivery_address: deliveryAddress
+            delivery_message: deliveryMessage
         });
 
         // Call backend API to create order
         const response = await api.post(API_CONFIG.ENDPOINTS.ORDERS, {
             product_id: productData.id,
-            delivery_address: deliveryAddress
+            delivery_message: deliveryMessage
         });
 
         console.log('Order created:', response);

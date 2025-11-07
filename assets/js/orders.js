@@ -29,7 +29,10 @@ function displayOrders(orders, view) {
 
 function createOrderCard(order, view) {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-lg shadow-sm p-4';
+    card.className = 'bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow';
+    
+    // Add click handler to open detail modal
+    card.onclick = () => showOrderDetailModal(order, view);
 
     const statusInfo = getStatusInfo(order.status, view);
     const orderDate = formatDate(order.created_at);
@@ -742,6 +745,297 @@ function formatDate(dateString) {
 
 // Make handleOrderAction globally available
 window.handleOrderAction = handleOrderAction;
+
+// Order Detail Modal Functions
+async function showOrderDetailModal(order, view) {
+    const modal = document.getElementById('orderDetailModal');
+    const content = document.getElementById('orderDetailContent');
+    
+    // Show modal with loading state
+    modal.classList.remove('hidden');
+    content.innerHTML = '<div class="text-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange mx-auto mb-4"></div><p class="text-gray-600">Loading order details...</p></div>';
+    document.body.style.overflow = 'hidden';
+    
+    try {
+        // Fetch full order details from API
+        const orderDetail = await api.get(`${API_CONFIG.ENDPOINTS.ORDERS}${order.id}/`);
+        console.log('Order detail:', orderDetail);
+        
+        // Render order details
+        renderOrderDetail(orderDetail, view);
+        
+    } catch (error) {
+        console.error('Error loading order details:', error);
+        content.innerHTML = `
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="alert-circle" class="h-8 w-8 text-red-500"></i>
+                </div>
+                <p class="text-red-500 mb-4">Failed to load order details</p>
+                <button onclick="closeOrderDetailModal()" class="bg-primary-orange text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                    Close
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+}
+
+function renderOrderDetail(order, view) {
+    const content = document.getElementById('orderDetailContent');
+    const statusInfo = getStatusInfo(order.status, view);
+    
+    // Extract product details
+    const productName = order.product_snapshot?.name || order.product_name || order.product?.name || 'Product';
+    const productImage = order.product_snapshot?.images || order.product_images || order.product?.images || 'https://via.placeholder.com/200';
+    const productCategory = order.product_snapshot?.category || order.product?.category || 'N/A';
+    const storeName = order.product_snapshot?.store_name || order.product?.store_name || order.seller_name || 'Store';
+    
+    // Format dates
+    const createdDate = formatDetailDate(order.created_at);
+    const acceptedDate = order.accepted_at ? formatDetailDate(order.accepted_at) : null;
+    const deliveredDate = order.delivered_at ? formatDetailDate(order.delivered_at) : null;
+    const confirmedDate = order.confirmed_at ? formatDetailDate(order.confirmed_at) : null;
+    const cancelledDate = order.cancelled_at ? formatDetailDate(order.cancelled_at) : null;
+    
+    // Determine which person's info to show
+    const otherParty = view === 'buyer' ? order.seller : order.buyer;
+    const otherPartyLabel = view === 'buyer' ? 'Seller' : 'Buyer';
+    
+    content.innerHTML = `
+        <!-- Order Status Header -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-600">Order #${order.order_number}</span>
+                <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
+            </div>
+            <p class="text-sm text-gray-700">${statusInfo.description}</p>
+        </div>
+
+        <!-- Product Information -->
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Product Information</h4>
+            <div class="flex gap-4 bg-gray-50 rounded-lg p-4">
+                <img src="${productImage}" alt="${productName}" class="w-24 h-24 object-cover rounded-lg">
+                <div class="flex-1">
+                    <h5 class="font-semibold text-gray-900 mb-1">${productName}</h5>
+                    <p class="text-sm text-gray-600 mb-1">Store: ${storeName}</p>
+                    <p class="text-sm text-gray-600">Category: ${productCategory}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ${otherPartyLabel} Information -->
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">${otherPartyLabel} Information</h4>
+            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Name:</span>
+                    <span class="text-sm font-medium text-gray-900">${otherParty.full_name}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Email:</span>
+                    <span class="text-sm font-medium text-gray-900">${otherParty.email}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Phone:</span>
+                    <span class="text-sm font-medium text-gray-900">${otherParty.phone_number}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Information -->
+        ${view === 'seller' ? `
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Delivery Instructions</h4>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-gray-800 whitespace-pre-wrap">${order.delivery_message || 'No delivery instructions provided'}</p>
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- Price Breakdown -->
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Price Breakdown</h4>
+            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Product Price:</span>
+                    <span class="text-sm font-medium text-gray-900">₦${parseFloat(order.product_price).toLocaleString()}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Delivery Fee:</span>
+                    <span class="text-sm font-medium text-gray-900">₦${parseFloat(order.delivery_fee).toLocaleString()}</span>
+                </div>
+                <div class="border-t border-gray-300 pt-2 mt-2">
+                    <div class="flex justify-between">
+                        <span class="text-base font-semibold text-gray-900">Total Amount:</span>
+                        <span class="text-base font-bold text-primary-orange">₦${parseFloat(order.total_amount).toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Escrow Information -->
+        ${order.escrow_status ? `
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Payment Status</h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Escrow Status:</span>
+                    <span class="text-sm font-medium ${
+                        order.escrow_status === 'HELD' ? 'text-orange-600' :
+                        order.escrow_status === 'RELEASED' ? 'text-green-600' :
+                        order.escrow_status === 'REFUNDED' ? 'text-blue-600' :
+                        'text-gray-900'
+                    }">${order.escrow_status}</span>
+                </div>
+                ${order.escrow_status === 'HELD' ? `
+                <p class="text-xs text-gray-500 mt-2">💰 Funds are held in escrow and will be released to seller upon confirmation</p>
+                ` : order.escrow_status === 'RELEASED' ? `
+                <p class="text-xs text-gray-500 mt-2">✅ Payment has been released to the seller</p>
+                ` : order.escrow_status === 'REFUNDED' ? `
+                <p class="text-xs text-gray-500 mt-2">💵 Funds have been refunded to buyer's wallet</p>
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- Order Timeline -->
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Order Timeline</h4>
+            <div class="space-y-3">
+                <!-- Created -->
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">Order Placed</p>
+                        <p class="text-xs text-gray-500">${createdDate}</p>
+                    </div>
+                </div>
+                
+                <!-- Accepted -->
+                ${acceptedDate ? `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">Order Accepted</p>
+                        <p class="text-xs text-gray-500">${acceptedDate}</p>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Delivered -->
+                ${deliveredDate ? `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="check" class="h-4 w-4 text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">Order Delivered</p>
+                        <p class="text-xs text-gray-500">${deliveredDate}</p>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Confirmed -->
+                ${confirmedDate ? `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="check-circle" class="h-4 w-4 text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">Order Confirmed</p>
+                        <p class="text-xs text-gray-500">${confirmedDate}</p>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Cancelled -->
+                ${cancelledDate ? `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="x" class="h-4 w-4 text-red-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">Order Cancelled</p>
+                        <p class="text-xs text-gray-500">${cancelledDate}</p>
+                        ${order.cancelled_by ? `<p class="text-xs text-gray-600 mt-1">Cancelled by: ${order.cancelled_by}</p>` : ''}
+                        ${order.cancellation_reason ? `<p class="text-xs text-gray-600">Reason: ${order.cancellation_reason}</p>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        ${statusInfo.button || statusInfo.secondaryButton ? `
+        <div class="flex gap-3 pt-4 border-t border-gray-200">
+            ${statusInfo.secondaryButton ? `
+                <button 
+                    class="flex-1 px-6 py-3 ${statusInfo.secondaryButton.class} text-white font-medium rounded-lg transition-colors"
+                    onclick="event.stopPropagation(); handleOrderAction('${order.id}', '${statusInfo.secondaryButton.action}')"
+                >
+                    ${statusInfo.secondaryButton.text}
+                </button>
+            ` : ''}
+            ${statusInfo.button ? `
+                <button 
+                    class="flex-1 px-6 py-3 ${statusInfo.button.class} text-white font-medium rounded-lg transition-colors"
+                    onclick="event.stopPropagation(); handleOrderAction('${order.id}', '${statusInfo.button.action}')"
+                >
+                    ${statusInfo.button.text}
+                </button>
+            ` : ''}
+        </div>
+        ` : ''}
+    `;
+    
+    // Re-initialize Lucide icons
+    lucide.createIcons();
+}
+
+function closeOrderDetailModal() {
+    const modal = document.getElementById('orderDetailModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function formatDetailDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Make functions globally available
+window.showOrderDetailModal = showOrderDetailModal;
+window.closeOrderDetailModal = closeOrderDetailModal;
+
+// Add keyboard support for detail modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const detailModal = document.getElementById('orderDetailModal');
+        if (detailModal && !detailModal.classList.contains('hidden')) {
+            closeOrderDetailModal();
+        }
+    }
+});
+
+// Close detail modal when clicking outside
+document.addEventListener('click', function(e) {
+    const detailModal = document.getElementById('orderDetailModal');
+    if (e.target === detailModal) {
+        closeOrderDetailModal();
+    }
+});
 
 // Add keyboard support for modal
 document.addEventListener('keydown', function(e) {
