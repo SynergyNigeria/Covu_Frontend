@@ -271,6 +271,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    async function openWithdrawalModal() {
+        const modal = document.getElementById('withdrawalModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            // Load wallet balance and bank accounts
+            await loadWithdrawalData();
+            
+            // Fetch Nigerian banks if not already loaded
+            if (nigerianBanks.length === 0) {
+                await fetchNigerianBanks();
+            }
+
+            // Re-render icons
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 100);
+        }
+    }
+
     const closeStoreModal = document.getElementById('closeStoreModal');
     const cancelStore = document.getElementById('cancelStore');
     const storeForm = document.getElementById('storeForm');
@@ -288,7 +310,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const closeWithdrawalModal = document.getElementById('closeWithdrawalModal');
     const cancelWithdrawal = document.getElementById('cancelWithdrawal');
     const withdrawalForm = document.getElementById('withdrawalForm');
-    const withdrawalMethod = document.getElementById('withdrawalMethod');
     const withdrawalAmount = document.getElementById('withdrawalAmount');
 
     if (closeWithdrawalModal) {
@@ -299,9 +320,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     if (withdrawalForm) {
         withdrawalForm.addEventListener('submit', handleWithdrawalSubmit);
-    }
-    if (withdrawalMethod) {
-        withdrawalMethod.addEventListener('change', handlePaymentMethodChange);
     }
     if (withdrawalAmount) {
         withdrawalAmount.addEventListener('input', updateWithdrawalSummary);
@@ -1100,51 +1118,511 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function handleWithdrawalSubmit(e) {
+    // Withdrawal Data Loading
+    let userBankAccounts = [];
+    let walletBalance = 0;
+
+    async function loadWithdrawalData() {
+        try {
+            // Fetch wallet balance
+            const walletData = await api.get('/wallet/');
+            walletBalance = parseFloat(walletData.balance || 0);
+
+            // Update balance display
+            const balanceDisplays = document.querySelectorAll('.withdrawal-balance');
+            balanceDisplays.forEach(el => {
+                el.textContent = `₦${walletBalance.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            });
+
+            // Fetch bank accounts
+            const bankAccountsData = await api.get('/wallet/bank-accounts/');
+            // Handle both array and paginated response
+            userBankAccounts = Array.isArray(bankAccountsData) ? bankAccountsData : (bankAccountsData.results || []);
+            
+            // Update bank account select dropdown
+            updateBankAccountSelect();
+
+        } catch (error) {
+            console.error('Error loading withdrawal data:', error);
+            showToast('Failed to load withdrawal data', 'error');
+        }
+    }
+
+    function updateBankAccountSelect() {
+        const selectEl = document.getElementById('withdrawalBankAccount');
+        if (!selectEl) return;
+
+        selectEl.innerHTML = '<option value="">Select bank account</option>';
+
+        if (!userBankAccounts || userBankAccounts.length === 0) {
+            selectEl.innerHTML += '<option value="" disabled>No bank accounts. Add one below.</option>';
+        } else {
+            userBankAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `${account.bank_name} - ${account.account_number} (${account.account_name})`;
+                if (account.is_default) {
+                    option.textContent += ' ✓';
+                    option.selected = true;
+                }
+                selectEl.appendChild(option);
+            });
+        }
+    }
+
+    // Bank Account Management
+    const showAddBankBtn = document.getElementById('showAddBankForm');
+    const showExistingAccountsBtn = document.getElementById('showExistingAccounts');
+    const closeExistingAccountsBtn = document.getElementById('closeExistingAccounts');
+    const existingAccountsSection = document.getElementById('existingAccountsSection');
+    const cancelAddBankBtn = document.getElementById('cancelAddBank');
+    const addBankSection = document.getElementById('addBankAccountSection');
+    const verifyBankBtn = document.getElementById('verifyBankAccount');
+    const saveBankBtn = document.getElementById('saveBankAccount');
+    
+    let verifiedBankData = null;
+    let nigerianBanks = [];
+
+    // Fetch Nigerian banks from Paystack
+    async function fetchNigerianBanks() {
+        const bankSelect = document.getElementById('newBankName');
+        const bankSearchInput = document.getElementById('bankSearchInput');
+        
+        try {
+            // Show loading state
+            if (bankSearchInput) {
+                bankSearchInput.placeholder = 'Loading banks...';
+                bankSearchInput.disabled = true;
+            }
+
+            console.log('Fetching Nigerian banks from API...');
+            const response = await api.get('/wallet/banks/');
+            console.log('Banks API response:', response);
+            
+            nigerianBanks = response.data || response || [];
+            console.log(`Loaded ${nigerianBanks.length} banks`);
+            
+            // Sort banks: Popular fintech first, then alphabetically
+            const popularBanks = ['OPay', 'Moniepoint', 'Palmpay', 'Kuda Bank', 'VFD Microfinance Bank', 'Zenith Bank', 'GTBank', 'Access Bank', 'First Bank'];
+            nigerianBanks.sort((a, b) => {
+                const aPopular = popularBanks.some(p => a.name.includes(p));
+                const bPopular = popularBanks.some(p => b.name.includes(p));
+                
+                if (aPopular && !bPopular) return -1;
+                if (!aPopular && bPopular) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            // Populate bank list
+            if (bankSelect) {
+                populateBankOptions(nigerianBanks);
+                bankSelect.disabled = false;
+            }
+            
+            // Enable search
+            if (bankSearchInput) {
+                bankSearchInput.placeholder = 'Type to search banks...';
+                bankSearchInput.disabled = false;
+                setupBankSearch();
+            }
+        } catch (error) {
+            console.error('Error fetching banks:', error);
+            showToast('Failed to load bank list. Please try again.', 'error');
+            
+            if (bankSearchInput) {
+                bankSearchInput.placeholder = 'Error loading banks';
+                bankSearchInput.disabled = false;
+            }
+        }
+    }
+
+    function populateBankOptions(banks) {
+        const bankSelect = document.getElementById('newBankName');
+        if (!bankSelect) return;
+        
+        bankSelect.innerHTML = '';
+        
+        if (banks.length === 0) {
+            const option = document.createElement('option');
+            option.textContent = 'No banks found';
+            bankSelect.appendChild(option);
+        } else {
+            banks.forEach(bank => {
+                const option = document.createElement('option');
+                option.value = bank.name;
+                option.dataset.code = bank.code;
+                option.textContent = bank.name;
+                bankSelect.appendChild(option);
+            });
+        }
+    }
+
+    function setupBankSearch() {
+        const bankSearchInput = document.getElementById('bankSearchInput');
+        const bankSelect = document.getElementById('newBankName');
+        const selectedBankDisplay = document.getElementById('selectedBankDisplay');
+        
+        if (!bankSearchInput || !bankSelect) return;
+        
+        // Show dropdown on focus
+        bankSearchInput.addEventListener('focus', function() {
+            bankSelect.classList.remove('hidden');
+            populateBankOptions(nigerianBanks);
+        });
+        
+        // Filter banks as user types
+        bankSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                populateBankOptions(nigerianBanks);
+            } else {
+                const filtered = nigerianBanks.filter(bank => 
+                    bank.name.toLowerCase().includes(searchTerm)
+                );
+                populateBankOptions(filtered);
+            }
+            
+            bankSelect.classList.remove('hidden');
+        });
+        
+        // Select bank from list
+        bankSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                bankSearchInput.value = selectedOption.textContent;
+                bankSelect.classList.add('hidden');
+                
+                // Show selected bank
+                if (selectedBankDisplay) {
+                    selectedBankDisplay.querySelector('p').textContent = `✓ ${selectedOption.textContent}`;
+                    selectedBankDisplay.classList.remove('hidden');
+                }
+            }
+        });
+        
+        // Click bank option to select
+        bankSelect.addEventListener('click', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                bankSearchInput.value = selectedOption.textContent;
+                bankSelect.classList.add('hidden');
+                
+                // Show selected bank
+                if (selectedBankDisplay) {
+                    selectedBankDisplay.querySelector('p').textContent = `✓ ${selectedOption.textContent}`;
+                    selectedBankDisplay.classList.remove('hidden');
+                }
+            }
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!bankSearchInput.contains(e.target) && !bankSelect.contains(e.target)) {
+                bankSelect.classList.add('hidden');
+            }
+        });
+    }
+
+    // Helper: Normalize name for comparison (remove spaces, special chars, lowercase)
+    function normalizeName(name) {
+        return name.toLowerCase().replace(/[^a-z]/g, '');
+    }
+
+    // Name matching function - checks if account name matches user's name
+    function namesMatch(accountName, userFullName) {
+        const normalizedAccountName = normalizeName(accountName);
+        const normalizedUserName = normalizeName(userFullName);
+        
+        // Split names into words
+        const accountWords = accountName.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        const userWords = userFullName.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        
+        // Check if at least 2 words match (handles reordered names like "John Doe" vs "Doe John")
+        let matchCount = 0;
+        for (const userWord of userWords) {
+            for (const accountWord of accountWords) {
+                if (userWord === accountWord || accountWord.includes(userWord) || userWord.includes(accountWord)) {
+                    matchCount++;
+                    break;
+                }
+            }
+        }
+        
+        // Match if at least 2 name parts match, or if normalized full names are similar
+        return matchCount >= 2 || normalizedAccountName.includes(normalizedUserName) || normalizedUserName.includes(normalizedAccountName);
+    }
+
+    // Helper: Check if account name matches user's name (flexible matching)
+    function namesMatch(accountName, userName) {
+        const accountNorm = normalizeName(accountName);
+        const userNorm = normalizeName(userName);
+        
+        // Split into words
+        const accountWords = accountName.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        const userWords = userName.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        
+        // Check if at least 2 words match (for "John Doe" vs "Doe John")
+        let matchCount = 0;
+        for (const userWord of userWords) {
+            if (accountWords.includes(userWord)) {
+                matchCount++;
+            }
+        }
+        
+        // Accept if 70% of words match or exact normalized match
+        return matchCount >= Math.min(2, userWords.length * 0.7) || accountNorm === userNorm;
+    }
+
+    if (showExistingAccountsBtn) {
+        showExistingAccountsBtn.addEventListener('click', function() {
+            existingAccountsSection.classList.remove('hidden');
+            addBankSection.classList.add('hidden');
+            
+            // Populate list
+            const listEl = document.getElementById('existingAccountsList');
+            if (listEl && userBankAccounts) {
+                if (userBankAccounts.length === 0) {
+                    listEl.innerHTML = '<p class="text-sm text-gray-600">No bank accounts added yet.</p>';
+                } else {
+                    listEl.innerHTML = userBankAccounts.map(account => `
+                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800">${account.bank_name}</p>
+                                <p class="text-sm text-gray-600">${account.account_number} - ${account.account_name}</p>
+                                ${account.is_default ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded mt-1 inline-block">Default</span>' : ''}
+                            </div>
+                            <button onclick="deleteBankAccount('${account.id}')" class="text-red-500 hover:text-red-700 p-2">
+                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            setTimeout(() => lucide.createIcons(), 50);
+        });
+    }
+
+    if (closeExistingAccountsBtn) {
+        closeExistingAccountsBtn.addEventListener('click', function() {
+            existingAccountsSection.classList.add('hidden');
+        });
+    }
+
+    if (showAddBankBtn) {
+        showAddBankBtn.addEventListener('click', async function() {
+            addBankSection.classList.remove('hidden');
+            existingAccountsSection.classList.add('hidden');
+            
+            // Load banks if not loaded
+            if (nigerianBanks.length === 0) {
+                await fetchNigerianBanks();
+            }
+            
+            // Re-render icons
+            setTimeout(() => lucide.createIcons(), 50);
+        });
+    }
+
+    if (cancelAddBankBtn) {
+        cancelAddBankBtn.addEventListener('click', function() {
+            addBankSection.classList.add('hidden');
+            showAddBankBtn.classList.remove('hidden');
+            existingAccountsSection.classList.add('hidden');
+            
+            // Clear form
+            const bankSearchInput = document.getElementById('bankSearchInput');
+            const bankSelect = document.getElementById('newBankName');
+            const selectedBankDisplay = document.getElementById('selectedBankDisplay');
+            
+            if (bankSearchInput) bankSearchInput.value = '';
+            if (bankSelect) bankSelect.classList.add('hidden');
+            if (selectedBankDisplay) selectedBankDisplay.classList.add('hidden');
+            
+            document.getElementById('newAccountNumber').value = '';
+            document.getElementById('accountNameDisplay').classList.add('hidden');
+            
+            const nameWarning = document.getElementById('nameWarningDisplay');
+            if (nameWarning) nameWarning.classList.add('hidden');
+            
+            verifiedBankData = null;
+        });
+    }
+
+    if (verifyBankBtn) {
+        verifyBankBtn.addEventListener('click', async function() {
+            const bankSearchInput = document.getElementById('bankSearchInput');
+            const bankSelect = document.getElementById('newBankName');
+            const accountNumber = document.getElementById('newAccountNumber').value;
+            
+            if (!bankSearchInput.value || !accountNumber) {
+                showToast('Please enter account number and select bank', 'error');
+                return;
+            }
+
+            if (accountNumber.length !== 10 || !/^\d+$/.test(accountNumber)) {
+                showToast('Account number must be exactly 10 digits', 'error');
+                return;
+            }
+
+            // Find selected bank from the list
+            const selectedBank = nigerianBanks.find(bank => bank.name === bankSearchInput.value);
+            if (!selectedBank) {
+                showToast('Please select a valid bank from the list', 'error');
+                return;
+            }
+
+            const bankCode = selectedBank.code;
+            const bankName = selectedBank.name;
+
+            try {
+                verifyBankBtn.disabled = true;
+                verifyBankBtn.innerHTML = '<div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>';
+
+                // Get user's full name for comparison
+                let userFullName = '';
+                try {
+                    const profile = await api.get('/auth/profile/');
+                    userFullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                } catch (e) {
+                    console.warn('Could not fetch user profile for name matching');
+                }
+
+                // Create bank account (backend will verify with Paystack)
+                const response = await api.post('/wallet/bank-accounts/', {
+                    bank_name: bankName,
+                    bank_code: bankCode,
+                    account_number: accountNumber,
+                    is_default: userBankAccounts.length === 0 // First account is default
+                });
+
+                const accountName = response.account_name;
+
+                // Show verified account name
+                document.getElementById('verifiedAccountName').textContent = accountName;
+                document.getElementById('accountNameDisplay').classList.remove('hidden');
+                
+                // Check if names match
+                const nameWarning = document.getElementById('nameWarningDisplay');
+                if (userFullName && !namesMatch(accountName, userFullName)) {
+                    nameWarning.classList.remove('hidden');
+                    setTimeout(() => lucide.createIcons(), 50);
+                } else {
+                    nameWarning.classList.add('hidden');
+                }
+                
+                verifiedBankData = response;
+                
+                showToast('Account verified and saved successfully!', 'success');
+
+                // Reload bank accounts
+                await loadWithdrawalData();
+                
+                // Hide add form after short delay
+                setTimeout(() => {
+                    addBankSection.classList.add('hidden');
+                    showAddBankBtn.classList.remove('hidden');
+                    
+                    // Clear form
+                    document.getElementById('newBankName').value = '';
+                    document.getElementById('newAccountNumber').value = '';
+                    document.getElementById('accountNameDisplay').classList.add('hidden');
+                    nameWarning.classList.add('hidden');
+                    verifiedBankData = null;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Extract detailed error message
+                let errorMsg = 'Failed to verify account';
+                if (error.errors) {
+                    // Handle Django Rest Framework error format
+                    if (error.errors.error && Array.isArray(error.errors.error)) {
+                        errorMsg = error.errors.error.join(', ');
+                    } else if (error.errors.non_field_errors) {
+                        errorMsg = error.errors.non_field_errors.join(', ');
+                    } else if (typeof error.errors === 'object') {
+                        // Get first error from any field
+                        const firstKey = Object.keys(error.errors)[0];
+                        const firstError = error.errors[firstKey];
+                        errorMsg = Array.isArray(firstError) ? firstError.join(', ') : firstError;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+                
+                // Add helpful message for duplicate account
+                if (errorMsg.includes('already added')) {
+                    errorMsg += '. Please use a different account or check your existing accounts.';
+                }
+                
+                showToast(errorMsg, 'error');
+            } finally {
+                verifyBankBtn.disabled = false;
+                verifyBankBtn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 inline mr-1"></i> Verify Account';
+                setTimeout(() => lucide.createIcons(), 50);
+            }
+        });
+    }
+
+    async function handleWithdrawalSubmit(e) {
         e.preventDefault();
 
         const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-        const method = document.getElementById('withdrawalMethod').value;
+        const bankAccountId = document.getElementById('withdrawalBankAccount').value;
 
-        if (!amount || amount < 5000) {
-            showToast('Minimum withdrawal amount is ₦5,000', 'error');
+        if (!amount || amount < 1000) {
+            showToast('Minimum withdrawal amount is ₦1,000', 'error');
             return;
         }
 
-        if (!method) {
-            showToast('Please select a payment method', 'error');
+        if (!bankAccountId) {
+            showToast('Please select a bank account', 'error');
             return;
         }
 
-        if (method === 'bank') {
-            const bankName = document.getElementById('bankName').value;
-            const accountNumber = document.getElementById('accountNumber').value;
-            const accountName = document.getElementById('accountName').value;
+        // Check balance
+        if (amount > walletBalance) {
+            showToast(`Insufficient balance. You have ₦${walletBalance.toLocaleString()}`, 'error');
+            return;
+        }
 
-            if (!bankName || !accountNumber || !accountName) {
-                showToast('Please fill in all bank details', 'error');
-                return;
+        try {
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="flex items-center gap-2"><div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div><span>Processing...</span></div>';
+
+            // Submit withdrawal request
+            const response = await api.post('/wallet/withdraw/', {
+                amount: amount,
+                bank_account_id: bankAccountId
+            });
+
+            showToast('Withdrawal request submitted successfully! Processing may take 1-3 business days.', 'success');
+            closeAllModals();
+
+            // Reload wallet balance
+            await loadWithdrawalData();
+            
+            // Update main balance display if it exists
+            const mainBalanceEl = document.getElementById('walletBalance');
+            if (mainBalanceEl) {
+                mainBalanceEl.textContent = `₦${walletBalance.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             }
-        }
 
-        // Simulate withdrawal request
-        showToast('Withdrawal request submitted successfully! Processing may take 1-3 business days.', 'success');
-        closeAllModals();
-
-        // Update wallet balance (simulate)
-        setTimeout(() => {
-            showToast('Withdrawal processed! Funds will be transferred to your account.', 'success');
-        }, 2000);
-    }
-
-    function handlePaymentMethodChange() {
-        const method = document.getElementById('withdrawalMethod').value;
-        const bankDetails = document.getElementById('bankDetails');
-
-        if (method === 'bank') {
-            bankDetails.classList.remove('hidden');
-        } else {
-            bankDetails.classList.add('hidden');
+        } catch (error) {
+            console.error('Withdrawal error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to process withdrawal';
+            showToast(errorMsg, 'error');
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Request Withdrawal';
+            }
         }
     }
 
@@ -1152,8 +1630,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         const amount = parseFloat(document.getElementById('withdrawalAmount').value) || 0;
         const summary = document.getElementById('withdrawalSummary');
 
-        if (amount >= 5000) {
-            const fee = 100;
+        if (amount >= 1000) {
+            // Calculate tiered fee (matching backend logic)
+            let fee = 100; // Default for < ₦10K
+            if (amount >= 200000) {
+                fee = 300; // ₦200K+
+            } else if (amount >= 100000) {
+                fee = 250; // ₦100K - ₦200K
+            } else if (amount >= 50000) {
+                fee = 200; // ₦50K - ₦99,999
+            } else if (amount >= 10000) {
+                fee = 150; // ₦10K - ₦49,999
+            }
+
             const total = amount - fee;
 
             document.getElementById('summaryAmount').textContent = `₦${amount.toLocaleString()}`;
@@ -1179,8 +1668,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.style.overflow = '';
     }
 
+    // Delete bank account function
+    async function deleteBankAccount(accountId) {
+        if (!confirm('Are you sure you want to delete this bank account?')) {
+            return;
+        }
+
+        try {
+            await api.delete(`/wallet/bank-accounts/${accountId}/`);
+            showToast('Bank account deleted successfully', 'success');
+            
+            // Reload bank accounts
+            await loadWithdrawalData();
+            
+            // Refresh the existing accounts list
+            document.getElementById('showExistingAccounts').click();
+        } catch (error) {
+            console.error('Error deleting bank account:', error);
+            showToast('Failed to delete bank account', 'error');
+        }
+    }
+
     // Make functions globally available
     window.showToast = showToast;
     window.openStoreConfigModal = openStoreConfigModal;
     window.closeAllModals = closeAllModals;
+    window.fetchNigerianBanks = fetchNigerianBanks;
+    window.deleteBankAccount = deleteBankAccount;
 });
