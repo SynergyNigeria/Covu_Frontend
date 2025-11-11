@@ -75,16 +75,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Setup search input with debounce
 function setupSearchListener() {
     searchInput.addEventListener('input', function() {
+        const searchTerm = searchInput.value.trim();
+        
         // Clear previous timer
         if (searchDebounceTimer) {
             clearTimeout(searchDebounceTimer);
         }
         
-        // Set new timer (wait 500ms after user stops typing)
+        // If search is cleared, reload all stores immediately
+        if (searchTerm === '') {
+            loadStoresFromAPI(true);
+            return;
+        }
+        
+        // Only search if at least 2 characters entered
+        if (searchTerm.length < 2) {
+            return;
+        }
+        
+        // Set new timer (wait 800ms after user stops typing)
         searchDebounceTimer = setTimeout(() => {
-            console.log('Searching for:', searchInput.value);
+            console.log('Searching for:', searchTerm);
             loadStoresFromAPI(true); // Reset scroll for new search
-        }, 500);
+        }, 800);
     });
 }
 
