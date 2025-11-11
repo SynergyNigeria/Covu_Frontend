@@ -180,7 +180,7 @@ async function loadStoresFromAPI(resetScroll = false) {
 // Get active category filter
 function getActiveCategory() {
     const activeButton = Array.from(categoryFilters.children)
-        .find(btn => btn.classList.contains('from-primary-orange'));
+        .find(btn => btn.classList.contains('active-category'));
     return activeButton ? activeButton.textContent : null;
 }
 
@@ -304,7 +304,7 @@ function handleStickySearch() {
 function populateCategories() {
     categories.forEach(category => {
         const button = document.createElement('button');
-        button.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+        button.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
         button.textContent = category;
         button.addEventListener('click', () => toggleCategoryFilter(button, category));
         categoryFilters.appendChild(button);
@@ -313,21 +313,21 @@ function populateCategories() {
 
 // Toggle category filter
 function toggleCategoryFilter(button, category) {
-    const isActive = button.classList.contains('bg-gradient-to-r') && button.classList.contains('from-primary-orange');
+    const isActive = button.classList.contains('active-category');
     
     // Deactivate all other category buttons first
     Array.from(categoryFilters.children).forEach(btn => {
         if (btn !== button) {
-            btn.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+            btn.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
         }
     });
     
     if (isActive) {
         // Deactivate this button (show all stores)
-        button.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+        button.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
     } else {
         // Activate this button
-        button.className = 'px-6 py-3 bg-gradient-to-r from-primary-orange to-primary-green text-white rounded-full shadow-lg transform scale-105 transition-all duration-300 border border-transparent font-medium';
+        button.className = 'category-filter-btn active-category px-6 py-3 bg-primary-orange text-white rounded-full shadow-lg transform scale-105 transition-all duration-300 border border-primary-orange font-medium';
     }
     
     // Reload stores from API with new filter
