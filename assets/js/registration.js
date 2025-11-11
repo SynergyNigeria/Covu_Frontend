@@ -14,6 +14,158 @@ document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state');
     const lgaSelect = document.getElementById('lga');
 
+    // Multi-step form elements
+    let currentStep = 1;
+    const totalSteps = 3;
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const step1Indicator = document.getElementById('step1Indicator');
+    const step2Indicator = document.getElementById('step2Indicator');
+    const step3Indicator = document.getElementById('step3Indicator');
+    const progress1 = document.getElementById('progress1');
+    const progress2 = document.getElementById('progress2');
+
+    // Function to show specific step
+    function showStep(step) {
+        // Hide all steps
+        step1.classList.add('hidden');
+        step2.classList.add('hidden');
+        step3.classList.add('hidden');
+
+        // Show current step
+        if (step === 1) {
+            step1.classList.remove('hidden');
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+            updateStepIndicator(1);
+        } else if (step === 2) {
+            step2.classList.remove('hidden');
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+            updateStepIndicator(2);
+        } else if (step === 3) {
+            step3.classList.remove('hidden');
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+            updateStepIndicator(3);
+        }
+
+        currentStep = step;
+        lucide.createIcons(); // Reinitialize icons
+    }
+
+    // Function to update step indicator
+    function updateStepIndicator(step) {
+        // Reset all indicators
+        step1Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
+        step2Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
+        step3Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
+        progress1.className = 'flex-1 h-1 mx-2';
+        progress2.className = 'flex-1 h-1 mx-2';
+
+        if (step >= 1) {
+            step1Indicator.classList.add('bg-primary-orange', 'text-white');
+        } else {
+            step1Indicator.classList.add('bg-gray-200', 'text-gray-500');
+        }
+
+        if (step >= 2) {
+            step2Indicator.classList.add('bg-primary-orange', 'text-white');
+            progress1.classList.add('bg-primary-orange');
+        } else {
+            step2Indicator.classList.add('bg-gray-200', 'text-gray-500');
+            progress1.classList.add('bg-gray-200');
+        }
+
+        if (step >= 3) {
+            step3Indicator.classList.add('bg-primary-orange', 'text-white');
+            progress2.classList.add('bg-primary-orange');
+        } else {
+            step3Indicator.classList.add('bg-gray-200', 'text-gray-500');
+            progress2.classList.add('bg-gray-200');
+        }
+    }
+
+    // Helper validation functions
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function isValidNigerianPhone(phone) {
+        // Remove all spaces and special characters
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        
+        // Check if it matches Nigerian phone patterns:
+        // 080XXXXXXXX, 081XXXXXXXX, 070XXXXXXXX, 090XXXXXXXX (11 digits)
+        // or 234XXXXXXXXXX (13 digits with country code)
+        const nigerianPhoneRegex = /^(0[7-9][0-1]\d{8}|234[7-9][0-1]\d{8})$/;
+        return nigerianPhoneRegex.test(cleanPhone);
+    }
+
+    // Function to validate current step
+    function validateStep(step) {
+        if (step === 1) {
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            if (!fullName || !email || !phone) {
+                showToast('Please fill in all required fields', 'error');
+                return false;
+            }
+
+            if (!isValidEmail(email)) {
+                showToast('Please enter a valid email address', 'error');
+                return false;
+            }
+
+            if (!isValidNigerianPhone(phone)) {
+                showToast('Please enter a valid Nigerian phone number', 'error');
+                return false;
+            }
+
+            return true;
+        } else if (step === 2) {
+            const state = document.getElementById('state').value;
+            const lga = document.getElementById('lga').value;
+
+            if (!state || !lga) {
+                showToast('Please select both state and LGA', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    // Next button click handler
+    nextBtn.addEventListener('click', function() {
+        if (validateStep(currentStep)) {
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+    });
+
+    // Previous button click handler
+    prevBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            showStep(currentStep - 1);
+        }
+    });
+
+    // Initialize form to show step 1
+    showStep(1);
+
     // Nigerian States and their LGAs data
     const nigerianLGAs = {
         'Abia': ['Aba North', 'Aba South', 'Arochukwu', 'Bende', 'Ikwuano', 'Isiala Ngwa North', 'Isiala Ngwa South', 'Isuikwuato', 'Obi Ngwa', 'Ohafia', 'Osisioma', 'Ugwunagbo', 'Ukwa East', 'Ukwa West', 'Umuahia North', 'Umuahia South', 'Umu Nneochi'],
