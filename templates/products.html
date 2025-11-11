@@ -56,6 +56,13 @@
             line-clamp: 2;
             overflow: hidden;
         }
+        
+        /* Category filter button hover styles */
+        .category-filter-btn:hover {
+            background-color: var(--primary-orange) !important;
+            color: white !important;
+            border-color: var(--primary-orange) !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -94,26 +101,6 @@
             <div id="categoryFiltersContainer" class="hidden">
                 <div class="flex flex-wrap gap-2" id="categoryFilters">
                     <!-- Categories will be populated by JS -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Sort Options -->
-    <section class="mb-6">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-600">Sort by:</span>
-                    <select id="sortSelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-orange text-sm">
-                        <option value="name">Name (A-Z)</option>
-                        <option value="price-low">Price (Low to High)</option>
-                        <option value="price-high">Price (High to Low)</option>
-                        <option value="newest">Newest</option>
-                    </select>
-                </div>
-                <div class="text-sm text-gray-600">
-                    <span id="productCount">0</span> products found
                 </div>
             </div>
         </div>

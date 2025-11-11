@@ -12,7 +12,6 @@ let currentFilters = {
     category: '',
     store_id: ''
 };
-let currentSort = 'name'; // Default sort by name
 
 // Categories matching backend
 const categories = [
@@ -35,8 +34,6 @@ let filterToggle;
 let productGrid;
 let productModal;
 let closeModal;
-let sortSelect;
-let productCount;
 
 // Debounce timer
 let searchDebounceTimer = null;
@@ -54,8 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     productGrid = document.getElementById('productGrid');
     productModal = document.getElementById('productModal');
     closeModal = document.getElementById('closeModal');
-    sortSelect = document.getElementById('sortSelect');
-    productCount = document.getElementById('productCount');
 
     // Check authentication
     if (!api.isAuthenticated()) {
@@ -90,22 +85,31 @@ function setupEventListeners() {
     // Search with debounce
     if (searchInput) {
         searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value.trim();
+            
+            // Clear previous timer
             if (searchDebounceTimer) {
                 clearTimeout(searchDebounceTimer);
             }
             
-            searchDebounceTimer = setTimeout(() => {
-                currentFilters.search = searchInput.value.trim();
+            // If search is cleared, reload all products immediately
+            if (searchTerm === '') {
+                currentFilters.search = '';
                 loadProducts(true);
-            }, 500);
-        });
-    }
-
-    // Sort select
-    if (sortSelect) {
-        sortSelect.addEventListener('change', function() {
-            currentSort = sortSelect.value;
-            sortProducts();
+                return;
+            }
+            
+            // Only search if at least 2 characters entered
+            if (searchTerm.length < 2) {
+                return;
+            }
+            
+            // Set new timer (wait 800ms after user stops typing)
+            searchDebounceTimer = setTimeout(() => {
+                console.log('Searching for:', searchTerm);
+                currentFilters.search = searchTerm;
+                loadProducts(true);
+            }, 800);
         });
     }
 
@@ -182,11 +186,6 @@ async function loadProducts(resetScroll = false) {
 
         // Display products
         displayProducts(products);
-        
-        // Update product count
-        if (productCount) {
-            productCount.textContent = allProducts.length;
-        }
 
         currentPage++;
 
@@ -255,16 +254,7 @@ function displayProducts(products) {
         productGrid.appendChild(card);
     });
     
-    // Update product count
-    updateProductCount();
-    
     lucide.createIcons();
-}
-
-function updateProductCount() {
-    if (productCount) {
-        productCount.textContent = allProducts.length;
-    }
 }
 
 function createProductCard(product) {
@@ -338,7 +328,7 @@ function populateCategories() {
     categoryFilters.innerHTML = '';
     categories.forEach(category => {
         const button = document.createElement('button');
-        button.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+        button.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
         button.textContent = category;
         button.addEventListener('click', () => toggleCategoryFilter(button, category));
         categoryFilters.appendChild(button);
@@ -346,22 +336,22 @@ function populateCategories() {
 }
 
 function toggleCategoryFilter(button, category) {
-    const isActive = button.classList.contains('from-primary-orange');
+    const isActive = button.classList.contains('active-category');
 
     // Deactivate all other buttons
     Array.from(categoryFilters.children).forEach(btn => {
         if (btn !== button) {
-            btn.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+            btn.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
         }
     });
 
     if (isActive) {
         // Deactivate - show all
-        button.className = 'px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg hover:bg-gradient-to-r hover:from-primary-orange hover:to-primary-green hover:text-white transform hover:scale-105 transition-all duration-300 border border-gray-200 hover:border-transparent font-medium';
+        button.className = 'category-filter-btn px-6 py-3 bg-white text-gray-700 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 border border-gray-200 font-medium';
         currentFilters.category = '';
     } else {
         // Activate - convert display name to backend format
-        button.className = 'px-6 py-3 bg-gradient-to-r from-primary-orange to-primary-green text-white rounded-full shadow-lg transform scale-105 transition-all duration-300 border border-transparent font-medium';
+        button.className = 'category-filter-btn active-category px-6 py-3 bg-primary-orange text-white rounded-full shadow-lg transform scale-105 transition-all duration-300 border border-primary-orange font-medium';
         currentFilters.category = categoryDisplayToBackend(category);
     }
 
@@ -401,40 +391,6 @@ function toggleFilters() {
     }
 
     lucide.createIcons();
-}
-
-// ========================================
-// SORT FUNCTIONALITY
-// ========================================
-
-function sortProducts() {
-    if (!allProducts || allProducts.length === 0) return;
-
-    let sortedProducts = [...allProducts];
-
-    switch (currentSort) {
-        case 'name':
-            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-        case 'price-low':
-            sortedProducts.sort((a, b) => a.price - b.price);
-            break;
-        case 'price-high':
-            sortedProducts.sort((a, b) => b.price - a.price);
-            break;
-        case 'newest':
-            sortedProducts.sort((a, b) => {
-                const dateA = new Date(a.created_at);
-                const dateB = new Date(b.created_at);
-                return dateB - dateA;
-            });
-            break;
-        default:
-            break;
-    }
-
-    allProducts = sortedProducts;
-    displayProducts(sortedProducts);
 }
 
 // ========================================
