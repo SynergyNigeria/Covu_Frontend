@@ -39,20 +39,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (step === 1) {
             step1.classList.remove('hidden');
             prevBtn.classList.add('hidden');
+            prevBtn.disabled = true;
             nextBtn.classList.remove('hidden');
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             submitBtn.classList.add('hidden');
+            submitBtn.disabled = true;
             updateStepIndicator(1);
         } else if (step === 2) {
             step2.classList.remove('hidden');
             prevBtn.classList.remove('hidden');
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             nextBtn.classList.remove('hidden');
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             submitBtn.classList.add('hidden');
+            submitBtn.disabled = true;
             updateStepIndicator(2);
         } else if (step === 3) {
             step3.classList.remove('hidden');
             prevBtn.classList.remove('hidden');
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             nextBtn.classList.add('hidden');
+            nextBtn.disabled = true;
             submitBtn.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             updateStepIndicator(3);
         }
 
@@ -63,32 +77,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update step indicator
     function updateStepIndicator(step) {
         // Reset all indicators
-        step1Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
-        step2Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
-        step3Indicator.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold mb-2';
-        progress1.className = 'flex-1 h-1 mx-2';
-        progress2.className = 'flex-1 h-1 mx-2';
+        step1Indicator.className = 'step-indicator';
+        step2Indicator.className = 'step-indicator';
+        step3Indicator.className = 'step-indicator';
+        progress1.className = 'progress-line';
+        progress2.className = 'progress-line';
 
         if (step >= 1) {
-            step1Indicator.classList.add('bg-primary-orange', 'text-white');
+            step1Indicator.classList.add('step-active');
         } else {
-            step1Indicator.classList.add('bg-gray-200', 'text-gray-500');
+            step1Indicator.classList.add('step-inactive');
         }
 
         if (step >= 2) {
-            step2Indicator.classList.add('bg-primary-orange', 'text-white');
-            progress1.classList.add('bg-primary-orange');
+            step2Indicator.classList.add('step-active');
+            progress1.classList.add('progress-active');
         } else {
-            step2Indicator.classList.add('bg-gray-200', 'text-gray-500');
-            progress1.classList.add('bg-gray-200');
+            step2Indicator.classList.add('step-inactive');
         }
 
         if (step >= 3) {
-            step3Indicator.classList.add('bg-primary-orange', 'text-white');
-            progress2.classList.add('bg-primary-orange');
+            step3Indicator.classList.add('step-active');
+            progress2.classList.add('progress-active');
         } else {
-            step3Indicator.classList.add('bg-gray-200', 'text-gray-500');
-            progress2.classList.add('bg-gray-200');
+            step3Indicator.classList.add('step-inactive');
         }
     }
 
@@ -506,8 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Disable submit button
+        // Disable submit button and remove disabled styling
         submitBtn.disabled = true;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         submitBtn.querySelector('span').textContent = 'Creating Account...';
 
         try {
@@ -599,6 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Re-enable submit button
             submitBtn.disabled = false;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
             submitBtn.querySelector('span').textContent = 'Create Account';
         }
     }
