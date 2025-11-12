@@ -3,7 +3,7 @@
 
 const API_CONFIG = {
     // Base URL - Update for production
-    BASE_URL: 'http://localhost:8000/api',
+    BASE_URL: 'https://covu.onrender.com/api',
     
     // Endpoints
     ENDPOINTS: {
